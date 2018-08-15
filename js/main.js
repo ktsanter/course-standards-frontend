@@ -1,72 +1,48 @@
 const app = function () {
-	const API_BASE = 'https://script.google.com/macros/s/AKfycbyP5Rifn7Q05Qcd7CTfm-AOouFHHvUAvCVVuKSfQu-LCqJocP8/exec';
+	//const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec';
+	const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec'
 	const API_KEY = 'abcdef';
-	const CATEGORIES = ['general', 'financial', 'technology', 'marketing'];
+	const DEPARTMENTS = ['cte', 'english', 'math', 'socialstudies', 'science', 'worldlanguage'];
 
-	const state = {activePage: 1, activeCategory: null};
+	const state = {};
 	const page = {};
 
 	function init () {
-		page.notice = document.getElementById('notice');
-		page.filter = document.getElementById('filter');
 		page.container = document.getElementById('container');
-
-		_buildFilter();
-		_getNewPosts();
+		page.notice = document.getElementById('notice');
+		
+		_getCourseList();
 	}
 
-	function _getNewPosts () {
-		page.container.innerHTML = '';
-		_getPosts();
+	function _getCourseList () {
+		page.content.innerHTML = '';
+		_getCourseList();
 	}
 
-	function _getPosts () {
-		_setNotice('Loading posts');
+	function _getCourseList () {
+		_setNotice('Loading course list');
 
-		fetch(_buildApiUrl(state.activePage, state.activeCategory))
+		fetch(_buildApiUrl('courselist'))
 			.then((response) => response.json())
 			.then((json) => {
+				console.log('json.status=' + json.status);
 				if (json.status !== 'success') {
 					_setNotice(json.message);
 				}
-
-				_renderPosts(json.data);
-				_renderPostsPagination(json.pages);
+				console.log('json.data: ' + JSON.stringify(json.data));
+				_renderCourseList(json.data);
+				_setNotice('');
 			})
 			.catch((error) => {
-				_setNotice('Unexpected error loading posts');
+				_setNotice('Unexpected error loading course list');
 			})
 	}
 
-	function _buildFilter () {
-	    page.filter.appendChild(_buildFilterLink('no filter', true));
-
-	    CATEGORIES.forEach(function (category) {
-	    	page.filter.appendChild(_buildFilterLink(category, false));
-	    });
-	}
-
-	function _buildFilterLink (label, isSelected) {
-		const link = document.createElement('button');
-	  	link.innerHTML = _capitalize(label);
-	  	link.classList = isSelected ? 'selected' : '';
-	  	link.onclick = function (event) {
-	  		let category = label === 'no filter' ? null : label.toLowerCase();
-
-			_resetActivePage();
-	  		_setActiveCategory(category);
-	  		_getNewPosts();
-	  	};
-
-	  	return link;
-	}
-
-	function _buildApiUrl (page, category) {
+	function _buildApiUrl (datasetname) {
 		let url = API_BASE;
 		url += '?key=' + API_KEY;
-		url += '&page=' + page;
-		url += category !== null ? '&category=' + category : '';
-
+		url += datasetname !== null ? '&dataset=' + datasetname : '';
+		console.log('url=' + url);
 		return url;
 	}
 
@@ -74,69 +50,28 @@ const app = function () {
 		page.notice.innerHTML = label;
 	}
 
-	function _renderPosts (posts) {
-		posts.forEach(function (post) {
-			const article = document.createElement('article');
-			article.innerHTML = `
-				<h2>${post.title}</h2>
-				<div class="article-details">
-					<div>By ${post.author} on ${_formatDate(post.timestamp)}</div>
-					<div>Posted in ${post.category}</div>
-				</div>
-				${_formatContent(post.content)}
-			`;
-			page.container.appendChild(article);
-		});
-	}
-
-	function _renderPostsPagination (pages) {
-		if (pages.next) {
-			const link = document.createElement('button');
-			link.innerHTML = 'Load more posts';
-			link.onclick = function (event) {
-				_incrementActivePage();
-				_getPosts();
-			};
-
-			page.notice.innerHTML = '';
-			page.notice.appendChild(link);
-		} else {
-			_setNotice('No more posts to display');
-		}
-	}
-
-	function _formatDate (string) {
-		return new Date(string).toLocaleDateString('en-GB');
-	}
-
-	function _formatContent (string) {
-		return string.split('\n')
-			.filter((str) => str !== '')
-			.map((str) => `<p>${str}</p>`)
-			.join('');
-	}
-
-	function _capitalize (label) {
-		return label.slice(0, 1).toUpperCase() + label.slice(1).toLowerCase();
-	}
-
-	function _resetActivePage () {
-		state.activePage = 1;
-	}
-
-	function _incrementActivePage () {
-		state.activePage += 1;
-	}
-
-	function _setActiveCategory (category) {
-		state.activeCategory = category;
+	function _renderCourseList(data) {
+		var elemSelect = document.createElement('select');
+		elemSelect.id = 'selectCourse';
 		
-		const label = category === null ? 'no filter' : category;
-		Array.from(page.filter.children).forEach(function (element) {
-  			element.classList = label === element.innerHTML.toLowerCase() ? 'selected' : '';
-  		});
-	}
+		var test = document.createElement('option');
+		
+		for (var i = 0; i < data.length; i++) {
+			var elemOption = document.createElement('option');
+			elemOption.text = data[i].long;
+			elemOption.value = data[i].short;
+			if (i == 0) elemOption.selected = true;
+			elemSelect.appendChild(elemOption);
+		}
+		elemSelect.addEventListener('change', courseSelectChanged, false);
 
+		page.container.appendChild(elemSelect);
+	}
+	
+	function courseSelectChanged() {
+		console.log('courseSelectChanged: ' + document.getElementById('selectCourse').value);
+	}
+	
 	return {
 		init: init
  	};

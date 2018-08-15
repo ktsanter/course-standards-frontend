@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>Google Sheets CMS</title>
+	<link rel="stylesheet" href="css/normalize.min.css">
+	<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+	<header>
+		<h1>CTE Course Standards front end</h1>
+	</header>
+	<main>
+		<div class="information">
+			This is an example of a frontend using Google Sheets and Google Apps Script  The tool is designed as a single page application.
+		</div>
+		<nav id="filter"></nav>
+		<div id="container"></div>
+		<div id="notice"></div>
+	</main>
+	<footer>
+		<p>This data is from a Google Sheets backend</p>
+	</footer>
+	<script src="js/main.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', app.init);
+	</script>
+</body>
+</html>
