@@ -1,6 +1,35 @@
-html, body {
-	background: #f8f8f8;
-	color: #2d3436;
+.cse-colorscheme {
+	--cse-color1: #2d3436;
+	--cse-color2: #f8f8f8;
+}
+
+body {
+	color: var(--cse-color1);
+	background-color: var(--cse-color2);
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-size: normal;
+	font-size: 13px;
+}
+
+.cse-title {
+	color: var(--cse-color2);
+	background-color: var(--cse-color1);
+	border-color: var(--cse-color2);
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 5px;
+	font-weight: bold;
+	padding-left: 4px;
+	margin-bottom: 8px;
+}
+
+.cse-category-title {
+	color: var(--cse-color1);
+	background-color: var(--cse-color2);
+	border-color: var(--cse-color1);
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 5px;
+	font-weight: bold;
+	padding-left: 4px;
+	padding-right: 4px;
 }
