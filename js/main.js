@@ -1,4 +1,7 @@
 const app = function () {
+	const PAGE_TITLE = 'Course standards editor'
+	const PAGE_VERSION = 'v0.1';
+	
 	const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec';
 	const API_KEY = 'MVstandardsAPI';
 	const DEPARTMENTS = ['cte', 'english', 'math', 'socialstudies', 'science', 'worldlanguage'];
@@ -6,18 +9,25 @@ const app = function () {
 	const NO_SELECTION = 'NO_SELECTION';
 	const AP_KEY = 'AP';
 	const AP_POLICY_DOC = 'https://drive.google.com/open?id=1CnvIf-ZaTD5INn8ACzZi942oRpEE887EuJFipJ5eFNI';
+	const HEAVY_X_CODE = ' &#10006;';
+	const DOWN_ARROW_CODE = '&#9660;';
 
 	const page = {};
 	const apPolicyDoc = {};
 	const ssData = {};
 
 	function init () {
+		page.header = document.getElementById('header');
 		page.courselist = document.getElementById('courselist');
 		page.standards = document.getElementById('standards');
 		page.notice = document.getElementById('notice');
 		
+		_renderHeader();
+		
+		/* test buttons */
 		document.getElementById('btnTestPost').addEventListener('click', handleTestPostClick, false);
 		document.getElementById('btnTestEdit').addEventListener('click', handleTestEditClick, false);
+		/* end of test buttons */
 		
 		apPolicyDoc.text = 'Michigan Virtual Advanced Placement Course Policy';
 		apPolicyDoc.link = AP_POLICY_DOC;
@@ -53,6 +63,7 @@ const app = function () {
 
 	function _getCourseStandards (coursename) {
 		_setNotice('loading course standards...');
+		_removeCourseStandards();
 
 		fetch(_buildApiUrl('standards', coursename))
 			.then((response) => response.json())
@@ -63,6 +74,7 @@ const app = function () {
 				}
 				//console.log('json.data: ' + JSON.stringify(json.data));
 				ssData.standardsData = json.data;
+				
 				_renderCourseStandards(json.data);
 				_setNotice('');
 			})
@@ -132,9 +144,19 @@ const app = function () {
 		page.notice.innerHTML = label;
 	}
 
+	function _renderHeader() {
+		page.header.classList.add('cse-header');
+		
+		var elemTitle = document.createElement('span');
+		elemTitle.innerHTML = PAGE_TITLE ;//+ ' (' + PAGE_VERSION + ')';
+		
+		page.header.appendChild(elemTitle);
+	}
+	
 	function _renderCourseList(data) {
 		var elemSelect = document.createElement('select');
 		elemSelect.id = 'selectCourse';
+		elemSelect.classList.add('cse-control');
 		
 		var elemDefaultOption = document.createElement('option');
 		elemDefaultOption.text = '<select a course>';
@@ -149,7 +171,8 @@ const app = function () {
 		}
 		elemSelect.addEventListener('change', courseSelectChanged, false);
 
-		page.courselist.appendChild(elemSelect);
+		//page.courselist.appendChild(elemSelect);
+		page.header.appendChild(elemSelect);
 	}
 	
 	function _renderCourseStandards(data) {
@@ -158,6 +181,7 @@ const app = function () {
 		var catData = data.categoryInfo.categories;
 		var fullKeyList = data.categoryInfo.fullKeyList;
 		var standardsData = data.standards;
+		var selectionsData = data.selections.allSelections;
 		
 		for (var i = 0; i < catList.length; i++) {
 			var catKey = catList[i];
@@ -166,8 +190,9 @@ const app = function () {
 			
 			for (var j = 0; j < standardsKeyInfo.length; j++) {
 				var standardsKey = standardsKeyInfo[j];
-				var standard = standardsData[standardsKey];
-				catElement.appendChild(_createStandardsElement(standardsKey, fullKeyList[standardsKey], standardsData[standardsKey]));
+				var standardValue = standardsData[standardsKey];
+				var standardSelections = selectionsData[standardsKey];
+				catElement.appendChild(_createStandardsElement(standardsKey, fullKeyList[standardsKey], standardValue, standardSelections));
 			}
 			
 			page.standards.appendChild(document.createElement('br'));
@@ -185,7 +210,7 @@ const app = function () {
 		var elemCategory;
 		
 		if (categoryInfo.includePrompt) {
-			elemCategory = document.createElement('div');
+			var elemCategory = document.createElement('div');
 			elemCategoryTitle = document.createElement('span');
 			elemCategoryTitle.classList.add('cse-category-title');
 			elemCategoryTitle.innerHTML = categoryInfo.prompt;
@@ -197,7 +222,7 @@ const app = function () {
 		return elemCategory;
 	}
 	
-	function _createStandardsElement(keyName, keyInfo, standardValue) {
+	function _createStandardsElement(keyName, keyInfo, standardValue, selections) {
 		var elemWrapper = document.createElement('span');
 		
 		if (keyInfo.keyDisplay) {
@@ -205,6 +230,9 @@ const app = function () {
 
 			if (keyInfo.keyType == 'text') {
 				elemStandard = _createStandardsElement_text(keyName, keyInfo, standardValue);		
+				
+			} else if (keyInfo.keyType == 'datalist') {
+				elemStandard = _createStandardsElement_datalist(keyName, keyInfo, standardValue, selections);
 				
 			} else if (keyInfo.keyType == 'tf') {
 				elemStandard = _createStandardsElement_tf(keyName, keyInfo, standardValue);
@@ -223,42 +251,66 @@ const app = function () {
 	}
 	
 	function _createStandardsElement_text(keyName, keyInfo, standardValue) {
-		elemStandard = document.createElement('div');
+		var elemStandard = document.createElement('div');
+		elemStandard.classList.add('cse-standards');
 		
 		var elemPrompt = document.createElement('span');
+		elemPrompt.classList.add('cse-standards-prompt');
 		elemPrompt.innerHTML = keyInfo.keyPrompt;
 		
 		var elemValue = document.createElement('input');
 		elemValue.type = 'text';
 		elemValue.id = keyName;
 		elemValue.value = standardValue;
+		elemValue.classList.add('cse-standards-text');
 		elemValue.maxLength = 200;
 		elemValue.size = 40;
 		
 		elemStandard.appendChild(elemPrompt);
 		elemStandard.appendChild(elemValue);
 
-		if (keyInfo.keyIncludeSelect) {
-			var elemButton = document.createElement('button');
-			elemButton.id = 'btn' + keyName;
-			elemButton.innerHTML = '&#11167;';
-			elemButton.addEventListener('click', function() {
-					handleDownButtonClick(this);
-				}, false);
+		return elemStandard;
+	}
+				
+	function _createStandardsElement_datalist(keyName, keyInfo, standardValue, selections) {
+		var elemStandard = document.createElement('div');
+		elemStandard.classList.add('cse-standards');
 		
-			elemStandard.appendChild(elemButton);
+		var elemPrompt = document.createElement('span');
+		elemPrompt.classList.add('cse-standards-prompt');
+		elemPrompt.innerHTML = keyInfo.keyPrompt;
+		
+		var elemList = document.createElement('input');
+		var elemListName = 'selections' + keyName;
+		elemList.setAttribute('list', elemListName);
+		elemList.classList.add('cse-standards-list');
+		
+		var elemDatalist = document.createElement('datalist');
+		elemDatalist.id = elemListName;
+
+		for (var i = 0; i < selections.length; i++) {
+			var elemOption = document.createElement('option');
+			elemOption.value = selections[i];
+			elemDatalist.appendChild(elemOption);
 		}
+		elemList.value = standardValue;
+		
+		elemStandard.appendChild(elemPrompt);
+		elemStandard.appendChild(elemList);
+		elemStandard.appendChild(elemDatalist);
 
 		return elemStandard;
 	}
 
-				
 	function _createStandardsElement_tf(keyName, keyInfo, standardValue) {
-		elemStandard = document.createElement('div');
+		var elemStandard = document.createElement('div');
+		elemStandard.classList.add('cse-standards');
+
 		var elemPrompt = document.createElement('span');
 		elemPrompt.innerHTML = keyInfo.keyPrompt;
 		var elemCheckbox = document.createElement('input');
 		elemCheckbox.id = keyName;
+		elemCheckbox.classList.add('cse-standards-tf');
 		elemCheckbox.type = 'checkbox';
 		elemCheckbox.checked = standardValue;
 				
@@ -277,6 +329,9 @@ const app = function () {
 
 				
 	function _createStandardsElement_link(keyName, keyInfo, standardValue) {
+		var elemStandard = document.createElement('div');
+		elemStandard.classList.add('cse-standards');
+
 		var linkInfo = JSON.parse(standardValue);
 		//console.log(keyInfo.keyName + ': ' + JSON.stringify(linkInfo) + ', ' + linkInfo.text);
 		if (linkInfo.text) {
@@ -293,8 +348,10 @@ const app = function () {
 	}
 	
 	function _createStandardsElement_unrecognized(keyName, keyInfo, standardValue) {
-		elemStandard = document.createElement('div');
+		var elemStandard = document.createElement('div');
+		elemStandard.classList.add('cse-standards');
 		elemStandard.innerHTML = keyInfo.keyPrompt + '(' + keyName + ' unrecognized type: ' + keyInfo.keyType + ')';
+
 		return elemStandard;
 	}
 	
@@ -303,6 +360,7 @@ const app = function () {
 		var currentValue = document.getElementById(keyname).value;
 		
 		var elemWrapper = document.createElement('div');
+		elemWrapper.classList.add('cse-selections-wrapper');
 
 		var elemSelect = document.createElement('select');
 		elemSelect.id = 'select' + keyname;
@@ -318,7 +376,6 @@ const app = function () {
 		elemSelect.addEventListener('change', function() {selectOptionChanged(this, keyname)}, false);
 		
 		elemWrapper.appendChild(elemSelect);
-		elemWrapper.appendChild(document.createElement('br'));
 		document.getElementById(keyname).parentNode.appendChild(elemWrapper);
 	}
 	
@@ -349,6 +406,8 @@ const app = function () {
 	}
 	
 	function handleTestPostClick() {
+		console.log('disabled');
+		return;
 		console.log('test post');
 		var coursename = document.getElementById('selectCourse').value;
 		if (coursename != NO_COURSE) {
@@ -357,6 +416,8 @@ const app = function () {
 	}
 	
 	function handleTestEditClick() {
+		console.log('disabled');
+		return;
 		console.log('test edit');
 		var coursename = document.getElementById('selectCourse').value;
 		if (coursename != NO_COURSE) {
@@ -365,17 +426,6 @@ const app = function () {
 			_postCourseStandards(coursename);
 			//_getCourseStandards(coursename);
 		}
-	}
-	
-	function handleDownButtonClick(btn) {
-		//console.log('down button clicked: ' + btn.id.slice(3));
-		_getStandardsSelections(btn.id.slice(3));
-	}
-	
-	function selectOptionChanged(elem, keyname) {
-		var newStandardsValue = document.getElementById(elem.value).text;
-		console.log('select option changed for ' + keyname + ': ' + newStandardsValue);
-		elem.parentNode.parentNode.removeChild(elem.parentNode.parentNode.lastChild);
 	}
 	
 	return {
