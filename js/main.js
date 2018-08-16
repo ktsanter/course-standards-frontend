@@ -24,11 +24,6 @@ const app = function () {
 		
 		_renderHeader();
 		
-		/* test buttons */
-		document.getElementById('btnTestPost').addEventListener('click', handleTestPostClick, false);
-		document.getElementById('btnTestEdit').addEventListener('click', handleTestEditClick, false);
-		/* end of test buttons */
-		
 		apPolicyDoc.text = 'Michigan Virtual Advanced Placement Course Policy';
 		apPolicyDoc.link = AP_POLICY_DOC;
 		
@@ -84,29 +79,9 @@ const app = function () {
 			})
 	}
 
-	function _getStandardsSelections (keyname) {
-		_setNotice('loading selections...');
-
-		fetch(_buildApiUrl('selections', null, keyname))
-			.then((response) => response.json())
-			.then((json) => {
-				//console.log('json.status=' + json.status);
-				if (json.status !== 'success') {
-					_setNotice(json.message);
-				}
-				//console.log('json.data: ' + JSON.stringify(json.data));
-				
-				_renderStandardsSelection(keyname, json.data);
-				_setNotice('');
-			})
-			.catch((error) => {
-				_setNotice('Unexpected error loading course standards');
-				console.log(error);
-			})
-	}
-
 	function _postCourseStandards (coursename) {
-		_setNotice('posting course standards...');
+		//TODO: disable/enable edit controls around this or just _removeCourseStandards();
+		_setNotice('posting course standards...NOTE: should');
 		var postData = _packageCourseStandardsForPost(coursename);
 		//console.log('posting course standards: ' + JSON.stringify(postData));
 		
@@ -142,6 +117,15 @@ const app = function () {
 
 	function _setNotice (label) {
 		page.notice.innerHTML = label;
+		/**/
+		if (label == '') {
+			page.notice.style.display = 'none'; 
+			page.notice.style.visibility = 'hidden';
+		} else {
+			page.notice.style.display = 'block';
+			page.notice.style.visibility = 'visible';
+		}
+		/**/
 	}
 
 	function _renderHeader() {
@@ -171,7 +155,6 @@ const app = function () {
 		}
 		elemSelect.addEventListener('change', courseSelectChanged, false);
 
-		//page.courselist.appendChild(elemSelect);
 		page.header.appendChild(elemSelect);
 	}
 	
@@ -195,8 +178,10 @@ const app = function () {
 				catElement.appendChild(_createStandardsElement(standardsKey, fullKeyList[standardsKey], standardValue, standardSelections));
 			}
 			
-			page.standards.appendChild(document.createElement('br'));
-			page.standards.appendChild(catElement);
+				if (i > 0) {
+					page.standards.appendChild(document.createElement('br'));
+				}
+				page.standards.appendChild(catElement);
 		}
 	}
 	
@@ -230,6 +215,9 @@ const app = function () {
 
 			if (keyInfo.keyType == 'text') {
 				elemStandard = _createStandardsElement_text(keyName, keyInfo, standardValue);		
+				
+			} else if (keyInfo.keyType == 'nonedit') {
+				elemStandard = _createStandardsElement_nonedit(keyName, keyInfo, standardValue);		
 				
 			} else if (keyInfo.keyType == 'datalist') {
 				elemStandard = _createStandardsElement_datalist(keyName, keyInfo, standardValue, selections);
@@ -265,6 +253,25 @@ const app = function () {
 		elemValue.classList.add('cse-standards-text');
 		elemValue.maxLength = 200;
 		elemValue.size = 40;
+		
+		elemStandard.appendChild(elemPrompt);
+		elemStandard.appendChild(elemValue);
+
+		return elemStandard;
+	}
+	
+	function _createStandardsElement_nonedit(keyName, keyInfo, standardValue) {
+		var elemStandard = document.createElement('div');
+		elemStandard.classList.add('cse-standards');
+		
+		var elemPrompt = document.createElement('span');
+		elemPrompt.classList.add('cse-standards-prompt');
+		elemPrompt.innerHTML = keyInfo.keyPrompt;
+		
+		var elemValue = document.createElement('span');
+		elemValue.id = keyName;
+		elemValue.innerHTML = standardValue;
+		elemValue.classList.add('cse-standards-nonedit');
 		
 		elemStandard.appendChild(elemPrompt);
 		elemStandard.appendChild(elemValue);
@@ -316,9 +323,10 @@ const app = function () {
 				
 		elemStandard.appendChild(elemPrompt);
 		elemStandard.appendChild(elemCheckbox);
-		
-		if (keyInfo.keyName == AP_KEY  && standardValue) {
+
+		if (keyName == AP_KEY  && standardValue) {
 			var elemLink = document.createElement('a');
+			elemLink.classList.add('cse-standards-link');
 			elemLink.text = apPolicyDoc.text;
 			elemLink.href = apPolicyDoc.link;
 			elemLink.target = "_blank";
@@ -330,17 +338,20 @@ const app = function () {
 				
 	function _createStandardsElement_link(keyName, keyInfo, standardValue) {
 		var elemStandard = document.createElement('div');
-		elemStandard.classList.add('cse-standards');
 
 		var linkInfo = JSON.parse(standardValue);
 		//console.log(keyInfo.keyName + ': ' + JSON.stringify(linkInfo) + ', ' + linkInfo.text);
 		if (linkInfo.text) {
-			elemStandard = document.createElement('div');
+			var elemStandard = document.createElement('div');
+			
 			var elemLink = document.createElement('a');
+			elemLink.classList.add('cse-standards-link');
 			elemLink.text = linkInfo.text;
 			elemLink.href = linkInfo.link;
 			elemLink.target = "_blank";
+			
 			elemStandard.appendChild(elemLink);
+		
 		} else {
 			elemStandard = document.createElement('span');
 		}
@@ -353,30 +364,6 @@ const app = function () {
 		elemStandard.innerHTML = keyInfo.keyPrompt + '(' + keyName + ' unrecognized type: ' + keyInfo.keyType + ')';
 
 		return elemStandard;
-	}
-	
-	function _renderStandardsSelection(keyname, data) {
-		var selections = data.selections;	
-		var currentValue = document.getElementById(keyname).value;
-		
-		var elemWrapper = document.createElement('div');
-		elemWrapper.classList.add('cse-selections-wrapper');
-
-		var elemSelect = document.createElement('select');
-		elemSelect.id = 'select' + keyname;
-		
-		for (var i = 0; i < selections.length; i++) {
-			var elemOption = document.createElement('option');
-			elemOption.text = selections[i];
-			elemOption.value = 'optSelect' + i;
-			elemOption.id = elemOption.value;
-			elemOption.selected = (currentValue == selections[i]);
-			elemSelect.append(elemOption);
-		}
-		elemSelect.addEventListener('change', function() {selectOptionChanged(this, keyname)}, false);
-		
-		elemWrapper.appendChild(elemSelect);
-		document.getElementById(keyname).parentNode.appendChild(elemWrapper);
 	}
 	
 	function _packageCourseStandardsForPost (coursename) {		
@@ -403,29 +390,6 @@ const app = function () {
 		if (newCourseName == NO_COURSE) return;
 		
 		_getCourseStandards (newCourseName);
-	}
-	
-	function handleTestPostClick() {
-		console.log('disabled');
-		return;
-		console.log('test post');
-		var coursename = document.getElementById('selectCourse').value;
-		if (coursename != NO_COURSE) {
-			_postCourseStandards(coursename);
-		}
-	}
-	
-	function handleTestEditClick() {
-		console.log('disabled');
-		return;
-		console.log('test edit');
-		var coursename = document.getElementById('selectCourse').value;
-		if (coursename != NO_COURSE) {
-			var standards = ssData.standardsData.standards;
-			standards['DB_requiredreplies'] = 5;
-			_postCourseStandards(coursename);
-			//_getCourseStandards(coursename);
-		}
 	}
 	
 	return {
