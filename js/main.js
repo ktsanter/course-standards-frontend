@@ -6,12 +6,10 @@ const app = function () {
 	const API_KEY = 'MVstandardsAPI';
 	const DEPARTMENTS = ['cte', 'english', 'math', 'socialstudies', 'science', 'worldlanguage'];
 	const NO_COURSE = 'NO_COURSE';
-	const NO_SELECTION = 'NO_SELECTION';
 	const AP_KEY = 'AP';
 	const AP_POLICY_DOC = 'https://drive.google.com/open?id=1CnvIf-ZaTD5INn8ACzZi942oRpEE887EuJFipJ5eFNI';
-	const HEAVY_X_CODE = ' &#10006;';
-	const DOWN_ARROW_CODE = '&#9660;';
-
+	const SAVE_ME_CLASS = 'cse-save-me';
+	
 	const page = {};
 	const apPolicyDoc = {};
 	const ssData = {};
@@ -80,11 +78,12 @@ const app = function () {
 	}
 
 	function _postCourseStandards (coursename) {
-		//TODO: disable/enable edit controls around this or just _removeCourseStandards();
-		_setNotice('posting course standards...NOTE: should');
+		_setNotice('posting course standards');
 		var postData = _packageCourseStandardsForPost(coursename);
 		//console.log('posting course standards: ' + JSON.stringify(postData));
-		
+			console.log('actual posting disabled');
+			_setNotice('');
+			return;
 		fetch(_buildApiUrl('standards', coursename), {
 				method: 'post',
 				body: JSON.stringify(postData)
@@ -98,6 +97,8 @@ const app = function () {
 				console.log('json.data: ' + JSON.stringify(json.data));
 				
 				_setNotice('');
+				
+				_getCourseStandards(coursename);
 			})
 			.catch((error) => {
 				_setNotice('Unexpected error posting course standards');
@@ -183,11 +184,19 @@ const app = function () {
 				}
 				page.standards.appendChild(catElement);
 		}
+		
+		_renderSaveButton();
 	}
 	
 	function _removeCourseStandards() {
 		while (page.standards.firstChild) {
 			page.standards.removeChild(page.standards.firstChild);
+		}
+		
+		var elemSave = page.savebutton;
+		if (typeof(elemSave) != 'undefined' && elemSave != null) {
+			page.savebutton.parentNode.removeChild(elemSave);
+			page.savebutton = null;
 		}
 	}
 	
@@ -251,6 +260,7 @@ const app = function () {
 		elemValue.id = keyName;
 		elemValue.value = standardValue;
 		elemValue.classList.add('cse-standards-text');
+		elemValue.classList.add(SAVE_ME_CLASS);
 		elemValue.maxLength = 200;
 		elemValue.size = 40;
 		
@@ -288,10 +298,11 @@ const app = function () {
 		elemPrompt.innerHTML = keyInfo.keyPrompt;
 		
 		var elemList = document.createElement('input');
-		var elemListName = 'selections' + keyName;
+		elemList.id = keyName;
+		var elemListName = 'list' + keyName;
 		elemList.setAttribute('list', elemListName);
 		elemList.classList.add('cse-standards-list');
-		
+		elemList.classList.add(SAVE_ME_CLASS);
 		var elemDatalist = document.createElement('datalist');
 		elemDatalist.id = elemListName;
 
@@ -318,6 +329,7 @@ const app = function () {
 		var elemCheckbox = document.createElement('input');
 		elemCheckbox.id = keyName;
 		elemCheckbox.classList.add('cse-standards-tf');
+		elemCheckbox.classList.add(SAVE_ME_CLASS);
 		elemCheckbox.type = 'checkbox';
 		elemCheckbox.checked = standardValue;
 				
@@ -337,6 +349,7 @@ const app = function () {
 
 				
 	function _createStandardsElement_link(keyName, keyInfo, standardValue) {
+		//TODO: implement editing and saving as need arises
 		var elemStandard = document.createElement('div');
 
 		var linkInfo = JSON.parse(standardValue);
@@ -366,9 +379,22 @@ const app = function () {
 		return elemStandard;
 	}
 	
-	function _packageCourseStandardsForPost (coursename) {		
+	function _renderSaveButton() {
+		var elemSave = document.createElement('button');
+		elemSave.id = 'btnSave';
+		elemSave.classList.add('cse-control');
+		elemSave.innerHTML = 'save';
+		elemSave.addEventListener('click', saveButtonClicked, false);
+
+		page.savebutton = elemSave;
+		page.header.appendChild(elemSave);
+	}
+	
+	function _packageCourseStandardsForPost (coursename) {	
 		var standards = ssData.standardsData.standards;
 		var fullKeyList = ssData.standardsData.categoryInfo.fullKeyList;
+		copyCurrentValuesToStandards(coursename, standards);
+		
 		var postData = {
 			"coursename": ssData.standardsData.courseName,
 			"courseRowNumber": ssData.standardsData.courseRowNumber, 
@@ -384,12 +410,33 @@ const app = function () {
 		return postData;
 	}
 	
+	function copyCurrentValuesToStandards(coursename, standards) {
+		var saveElements = document.getElementsByClassName(SAVE_ME_CLASS);
+		for (var i = 0; i < saveElements.length; i++) {
+			var elem = saveElements.item(i);
+			var value;
+			if (elem.type == 'text') {
+				value = elem.value;
+			} else if (elem.type == 'checkbox') {
+				value = (elem.value == 'on');
+			} else {
+				value = '????';
+			}
+			console.log('save #' + i + ': ' + elem.id + ' value=' + value);
+		}
+	}
+	
 	function courseSelectChanged(data) {
 		var newCourseName = document.getElementById('selectCourse').value;
 		
-		if (newCourseName == NO_COURSE) return;
+		if (newCourseName == NO_COURSE) return;	
 		
 		_getCourseStandards (newCourseName);
+	}
+	
+	function saveButtonClicked() {
+		var courseName = document.getElementById('selectCourse').value;
+		_postCourseStandards(courseName);
 	}
 	
 	return {
