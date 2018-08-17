@@ -87,16 +87,21 @@ const app = function () {
 			})
 	}
 
-	function _postCourseStandards (coursename) {
+	function _postCourseStandards () {
 		_setNotice('posting course standards...');
-		var postData = _packageCourseStandardsForPost(coursename);
-		//console.log('posting course standards: ' + JSON.stringify(postData));
 		
-		/*
+		var postData = {
+			"coursename": ssData.standardsData.courseName,
+			"courseRowNumber": ssData.standardsData.courseRowNumber, 
+			"standardsChanges": _findStandardsChanges()
+		};
+		console.log('posting course standards: ' + JSON.stringify(postData));
+		
+		/**/
 			console.log('actual posting disabled');
 			_setNotice('');
 			return;
-		*/
+		/**/
 		
 		fetch(_buildApiUrl('standards', coursename), {
 				method: 'post',
@@ -424,33 +429,20 @@ const app = function () {
 		page.header.appendChild(elemReload);
 	}
 	
-	function _packageCourseStandardsForPost (coursename) {	
+	function _findStandardsChanges() {
+		var changeInfo = {
+			"changeFlag": false,
+			"keysWithChange": {}
+		};
 		var standards = ssData.standardsData.standards;
-		var fullKeyList = ssData.standardsData.categoryInfo.fullKeyList;
-		_copyCurrentValuesToStandards(coursename, standards);
-		
-		var postData = {
-			"coursename": ssData.standardsData.courseName,
-			"courseRowNumber": ssData.standardsData.courseRowNumber, 
-			"standards": {}};
-			
-		for (var standardsKey in standards) {
-			postData.standards[standardsKey] = {
-				"colNumber": fullKeyList[standardsKey].keyIndex,
-				"value": standards[standardsKey]
-			};
-		}
-		
-		return postData;
-	}
-	
-	function _copyCurrentValuesToStandards(coursename, standards) {
 		var saveElements = document.getElementsByClassName(SAVE_ME_CLASS);
+		
 		for (var i = 0; i < saveElements.length; i++) {
 			var elem = saveElements.item(i);
 			var key = elem.id;
 			
 			var newValue;
+			
 			if (elem.type == 'text') { // includes both text and datalist
 				newValue = elem.value;
 			} else if (elem.type == 'checkbox') {
@@ -459,8 +451,29 @@ const app = function () {
 				newValue = '????';
 			}
 			
-			ssData.standardsData.standards[key] = newValue;
+			var currentValue = standards[key];
+			var newSelectionKey  = false;
+			if (currentValue != newValue) {
+				if (elem.type == 'text') newSelectionKey = isSelectionKeyNew(key, newValue);
+				changeInfo.changeFlag = true;
+				changeInfo.keysWithChange[key] = {
+					"newValue": newValue,
+					"newSelectionKey": newSelectionKey
+				};
+			}
 		}
+		
+		return changeInfo;
+	}
+	
+	function isSelectionKeyNew(key, value) {
+		var selectionsForKey = ssData.standardsData.selections.allSelections[key];
+		var isNewSelection = true;
+		for (var i = 0; i < selectionsForKey.length && isNewSelection; i++) {
+			isNewSelection = (value != selectionsForKey[i]);
+		}
+		
+		return isNewSelection;
 	}
 	
 	function _courseSelectChanged(data) {
@@ -472,13 +485,11 @@ const app = function () {
 	}
 	
 	function _saveButtonClicked() {
-		var courseName = document.getElementById('selectCourse').value;
-		_postCourseStandards(courseName);
+		_postCourseStandards();
 	}
 	
 	function _reloadButtonClicked() {
-		var courseName = document.getElementById('selectCourse').value;
-		_getCourseStandards(courseName);
+		_getCourseStandards(ssData.standardsData.courseName);  // TODO: force flush here?
 	}
 	
 	return {
