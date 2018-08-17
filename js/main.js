@@ -89,15 +89,16 @@ const app = function () {
 
 	function _postCourseStandards () {
 		_setNotice('posting course standards...');
+		var coursename = ssData.standardsData.courseName;
 		
 		var postData = {
-			"coursename": ssData.standardsData.courseName,
+			"coursename": coursename,
 			"courseRowNumber": ssData.standardsData.courseRowNumber, 
 			"standardsChanges": _findStandardsChanges()
 		};
-		console.log('posting course standards: ' + JSON.stringify(postData));
+		//console.log('posting course standards: ' + JSON.stringify(postData));
 		
-		/**/
+		/**
 			console.log('actual posting disabled');
 			_setNotice('');
 			return;
@@ -432,7 +433,7 @@ const app = function () {
 	function _findStandardsChanges() {
 		var changeInfo = {
 			"changeFlag": false,
-			"keysWithChange": {}
+			"keysWithChanges": {}
 		};
 		var standards = ssData.standardsData.standards;
 		var saveElements = document.getElementsByClassName(SAVE_ME_CLASS);
@@ -456,9 +457,11 @@ const app = function () {
 			if (currentValue != newValue) {
 				if (elem.type == 'text') newSelectionKey = isSelectionKeyNew(key, newValue);
 				changeInfo.changeFlag = true;
-				changeInfo.keysWithChange[key] = {
+				var keyIndex = ssData.standardsData.categoryInfo.fullKeyList[key].keyIndex;
+				changeInfo.keysWithChanges[key] = {
 					"newValue": newValue,
-					"newSelectionKey": newSelectionKey
+					"newSelectionKey": newSelectionKey,
+					"keyIndex": keyIndex
 				};
 			}
 		}
