@@ -1,3 +1,10 @@
+//
+// TODO: implement dirty bit and use it with reload and course dropdown
+// TODO: look into splitting into mutliple files
+// TODO: add "view mode" for reporting, including single course only (no dropdown)
+// TODO: in web API force cache refresh on post receipt if there's a standards value not in the current list
+// TODO: in web API save date/time of update on post receipt
+//
 const app = function () {
 	const PAGE_TITLE = 'Course standards editor'
 	const PAGE_VERSION = 'v0.1';
@@ -5,9 +12,12 @@ const app = function () {
 	const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec';
 	const API_KEY = 'MVstandardsAPI';
 	const DEPARTMENTS = ['cte', 'english', 'math', 'socialstudies', 'science', 'worldlanguage'];
+	
 	const NO_COURSE = 'NO_COURSE';
+	
 	const AP_KEY = 'AP';
 	const AP_POLICY_DOC = 'https://drive.google.com/open?id=1CnvIf-ZaTD5INn8ACzZi942oRpEE887EuJFipJ5eFNI';
+	
 	const SAVE_ME_CLASS = 'cse-save-me';
 	
 	const page = {};
@@ -78,12 +88,16 @@ const app = function () {
 	}
 
 	function _postCourseStandards (coursename) {
-		_setNotice('posting course standards');
+		_setNotice('posting course standards...');
 		var postData = _packageCourseStandardsForPost(coursename);
 		//console.log('posting course standards: ' + JSON.stringify(postData));
+		
+		/*
 			console.log('actual posting disabled');
 			_setNotice('');
 			return;
+		*/
+		
 		fetch(_buildApiUrl('standards', coursename), {
 				method: 'post',
 				body: JSON.stringify(postData)
@@ -154,7 +168,7 @@ const app = function () {
 			elemOption.value = data[i].short;
 			elemSelect.appendChild(elemOption);
 		}
-		elemSelect.addEventListener('change', courseSelectChanged, false);
+		elemSelect.addEventListener('change', _courseSelectChanged, false);
 
 		page.header.appendChild(elemSelect);
 	}
@@ -185,7 +199,7 @@ const app = function () {
 				page.standards.appendChild(catElement);
 		}
 		
-		_renderSaveButton();
+		_renderControlButtons();
 	}
 	
 	function _removeCourseStandards() {
@@ -193,10 +207,20 @@ const app = function () {
 			page.standards.removeChild(page.standards.firstChild);
 		}
 		
+		_removeControlButtons();
+	}
+	
+	function _removeControlButtons() {
 		var elemSave = page.savebutton;
 		if (typeof(elemSave) != 'undefined' && elemSave != null) {
 			page.savebutton.parentNode.removeChild(elemSave);
 			page.savebutton = null;
+		}
+
+		var elemReload = page.reloadbutton;
+		if (typeof(elemReload) != 'undefined' && elemReload != null) {
+			page.reloadbutton.parentNode.removeChild(elemReload);
+			page.reloadbutton = null;
 		}
 	}
 	
@@ -326,11 +350,12 @@ const app = function () {
 
 		var elemPrompt = document.createElement('span');
 		elemPrompt.innerHTML = keyInfo.keyPrompt;
+		
 		var elemCheckbox = document.createElement('input');
+		elemCheckbox.type = 'checkbox';
 		elemCheckbox.id = keyName;
 		elemCheckbox.classList.add('cse-standards-tf');
 		elemCheckbox.classList.add(SAVE_ME_CLASS);
-		elemCheckbox.type = 'checkbox';
 		elemCheckbox.checked = standardValue;
 				
 		elemStandard.appendChild(elemPrompt);
@@ -349,7 +374,7 @@ const app = function () {
 
 				
 	function _createStandardsElement_link(keyName, keyInfo, standardValue) {
-		//TODO: implement editing and saving as need arises
+		//TODO: implement editing and saving of this type of link as need arises
 		var elemStandard = document.createElement('div');
 
 		var linkInfo = JSON.parse(standardValue);
@@ -379,21 +404,30 @@ const app = function () {
 		return elemStandard;
 	}
 	
-	function _renderSaveButton() {
+	function _renderControlButtons() {
 		var elemSave = document.createElement('button');
 		elemSave.id = 'btnSave';
 		elemSave.classList.add('cse-control');
 		elemSave.innerHTML = 'save';
-		elemSave.addEventListener('click', saveButtonClicked, false);
+		elemSave.addEventListener('click', _saveButtonClicked, false);
 
+		var elemReload = document.createElement('button');
+		elemReload.id = 'btnReload';
+		elemReload.classList.add('cse-control');
+		elemReload.innerHTML = 'reload';
+		elemReload.addEventListener('click', _reloadButtonClicked, false);
+		
 		page.savebutton = elemSave;
+		page.reloadbutton = elemReload
+		
 		page.header.appendChild(elemSave);
+		page.header.appendChild(elemReload);
 	}
 	
 	function _packageCourseStandardsForPost (coursename) {	
 		var standards = ssData.standardsData.standards;
 		var fullKeyList = ssData.standardsData.categoryInfo.fullKeyList;
-		copyCurrentValuesToStandards(coursename, standards);
+		_copyCurrentValuesToStandards(coursename, standards);
 		
 		var postData = {
 			"coursename": ssData.standardsData.courseName,
@@ -410,23 +444,26 @@ const app = function () {
 		return postData;
 	}
 	
-	function copyCurrentValuesToStandards(coursename, standards) {
+	function _copyCurrentValuesToStandards(coursename, standards) {
 		var saveElements = document.getElementsByClassName(SAVE_ME_CLASS);
 		for (var i = 0; i < saveElements.length; i++) {
 			var elem = saveElements.item(i);
-			var value;
-			if (elem.type == 'text') {
-				value = elem.value;
+			var key = elem.id;
+			
+			var newValue;
+			if (elem.type == 'text') { // includes both text and datalist
+				newValue = elem.value;
 			} else if (elem.type == 'checkbox') {
-				value = (elem.value == 'on');
+				newValue = elem.checked;
 			} else {
-				value = '????';
+				newValue = '????';
 			}
-			console.log('save #' + i + ': ' + elem.id + ' value=' + value);
+			
+			ssData.standardsData.standards[key] = newValue;
 		}
 	}
 	
-	function courseSelectChanged(data) {
+	function _courseSelectChanged(data) {
 		var newCourseName = document.getElementById('selectCourse').value;
 		
 		if (newCourseName == NO_COURSE) return;	
@@ -434,9 +471,14 @@ const app = function () {
 		_getCourseStandards (newCourseName);
 	}
 	
-	function saveButtonClicked() {
+	function _saveButtonClicked() {
 		var courseName = document.getElementById('selectCourse').value;
 		_postCourseStandards(courseName);
+	}
+	
+	function _reloadButtonClicked() {
+		var courseName = document.getElementById('selectCourse').value;
+		_getCourseStandards(courseName);
 	}
 	
 	return {
