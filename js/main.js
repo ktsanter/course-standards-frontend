@@ -1,7 +1,7 @@
 //
 // TODO: look into splitting into mutliple files
 // TODO: add "view mode" for reporting, including single course only (no dropdown)
-// TODO: in web API force cache refresh on post receipt if there's a standards value not in the current list
+// TODO: add "new course" button
 //
 const app = function () {
 	const PAGE_TITLE = 'Course standards editor'
@@ -37,9 +37,30 @@ const app = function () {
 		
 		ssData.lastUpdateKey = 'Last_update';
 		
-		_getCourseList();
+		_getInitialization();
 	}
 
+	function _getInitialization() {
+		_setNotice('initializing...');
+
+		fetch(_buildApiUrl('initialize'))
+			.then((response) => response.json())
+			.then((json) => {
+				console.log('json.status=' + json.status);
+				if (json.status !== 'success') {
+					_setNotice(json.message);
+				}
+				
+				console.log('json.data: ' + JSON.stringify(json.data));
+				_setNotice('');
+				_getCourseList()
+			})
+			.catch((error) => {
+				_setNotice('Unexpected error loading course list');
+				console.log(error);
+			})
+	}
+	
 	function _getCourseList () {
 		page.content.innerHTML = '';
 		_getCourseList();
@@ -57,8 +78,8 @@ const app = function () {
 				}
 				//console.log('json.data: ' + JSON.stringify(json.data));
 				ssData.courseList = json.data;
-				_renderCourseList(json.data);
 				_setNotice('');
+				_renderCourseList(json.data);
 			})
 			.catch((error) => {
 				_setNotice('Unexpected error loading course list');
