@@ -1,9 +1,7 @@
 //
-// TODO: implement dirty bit and use it with reload and course dropdown
 // TODO: look into splitting into mutliple files
 // TODO: add "view mode" for reporting, including single course only (no dropdown)
 // TODO: in web API force cache refresh on post receipt if there's a standards value not in the current list
-// TODO: in web API save date/time of update on post receipt
 //
 const app = function () {
 	const PAGE_TITLE = 'Course standards editor'
@@ -35,6 +33,10 @@ const app = function () {
 		apPolicyDoc.text = 'Michigan Virtual Advanced Placement Course Policy';
 		apPolicyDoc.link = AP_POLICY_DOC;
 		
+		page.dirtyBit = false;
+		
+		ssData.lastUpdateKey = 'Last_update';
+		
 		_getCourseList();
 	}
 
@@ -64,11 +66,11 @@ const app = function () {
 			})
 	}
 
-	function _getCourseStandards (coursename) {
+	function _getCourseStandards (coursename, forceCacheFlush) {
 		_setNotice('loading course standards...');
 		_removeCourseStandards();
 
-		fetch(_buildApiUrl('standards', coursename))
+		fetch(_buildApiUrl('standards', coursename, null, forceCacheFlush))
 			.then((response) => response.json())
 			.then((json) => {
 				//console.log('json.status=' + json.status);
@@ -96,7 +98,7 @@ const app = function () {
 			"courseRowNumber": ssData.standardsData.courseRowNumber, 
 			"standardsChanges": _findStandardsChanges()
 		};
-		//console.log('posting course standards: ' + JSON.stringify(postData));
+		console.log('posting course standards: ' + JSON.stringify(postData));
 		
 		/**
 			console.log('actual posting disabled');
@@ -118,7 +120,7 @@ const app = function () {
 				
 				_setNotice('');
 				
-				_getCourseStandards(coursename);
+				_getCourseStandards(coursename, false);
 			})
 			.catch((error) => {
 				_setNotice('Unexpected error posting course standards');
@@ -126,13 +128,14 @@ const app = function () {
 			})
 	}
 	
-	function _buildApiUrl (datasetname, coursename, keyname) {
+	function _buildApiUrl (datasetname, coursename, keyname, flushcache) {
 		let url = API_BASE;
 		url += '?key=' + API_KEY;
 		url += datasetname && datasetname !== null ? '&dataset=' + datasetname : '';
 		url += coursename && coursename !== null ? '&coursename=' + coursename : '';
 		url += keyname && keyname !== null ? '&keyname=' + keyname : '';
-		//console.log('buildApiUrl: url=' + url);
+		url += flushcache && flushcache != null ? '&flushcache=' + flushcache : '';
+		console.log('buildApiUrl: url=' + url);
 		return url;
 	}
 
@@ -174,7 +177,7 @@ const app = function () {
 			elemOption.value = data[i].short;
 			elemSelect.appendChild(elemOption);
 		}
-		elemSelect.addEventListener('change', _courseSelectChanged, false);
+		elemSelect.addEventListener('change',  _courseSelectChanged, false);
 
 		page.header.appendChild(elemSelect);
 	}
@@ -204,6 +207,12 @@ const app = function () {
 				}
 				page.standards.appendChild(catElement);
 		}
+
+		var allSaveElements = document.getElementsByClassName(SAVE_ME_CLASS);
+		for (var i = 0; i < allSaveElements.length; i++) {
+			allSaveElements[i].addEventListener('change', function() {_setDirtyBit(this, true)}, false);
+		}
+		page.dirtyBit = false;
 		
 		_renderControlButtons();
 	}
@@ -436,8 +445,12 @@ const app = function () {
 			"keysWithChanges": {}
 		};
 		var standards = ssData.standardsData.standards;
-		var saveElements = document.getElementsByClassName(SAVE_ME_CLASS);
+		var fullKeyList = ssData.standardsData.categoryInfo.fullKeyList;
 		
+		var formattedNow = new Date().toLocaleString();
+		changeInfo.keysWithChanges[ssData.lastUpdateKey] = _makeUpdateObject(formattedNow, false, fullKeyList[[ssData.lastUpdateKey]].keyIndex);
+		
+		var saveElements = document.getElementsByClassName(SAVE_ME_CLASS);
 		for (var i = 0; i < saveElements.length; i++) {
 			var elem = saveElements.item(i);
 			var key = elem.id;
@@ -456,17 +469,18 @@ const app = function () {
 			var newSelectionKey  = false;
 			if (currentValue != newValue) {
 				if (elem.type == 'text') newSelectionKey = isSelectionKeyNew(key, newValue);
+				var keyIndex = fullKeyList[key].keyIndex;
+				
 				changeInfo.changeFlag = true;
-				var keyIndex = ssData.standardsData.categoryInfo.fullKeyList[key].keyIndex;
-				changeInfo.keysWithChanges[key] = {
-					"newValue": newValue,
-					"newSelectionKey": newSelectionKey,
-					"keyIndex": keyIndex
-				};
+				changeInfo.keysWithChanges[key] = _makeUpdateObject(newValue, newSelectionKey, keyIndex);
 			}
 		}
 		
 		return changeInfo;
+	}
+	
+	function _makeUpdateObject(value, newSelectionKey, keyIndex) {
+		return {"newValue": value, "newSelectionKey": newSelectionKey, "keyIndex": keyIndex};
 	}
 	
 	function isSelectionKeyNew(key, value) {
@@ -479,20 +493,54 @@ const app = function () {
 		return isNewSelection;
 	}
 	
-	function _courseSelectChanged(data) {
-		var newCourseName = document.getElementById('selectCourse').value;
+	function _setDirtyBit(elem, setTo) {
+		page.dirtyBit = setTo;
+		if (page.dirtyBit) {
+			page.savebutton.innerHTML = '*save';
+		}
+	}
+	
+	function _confirmDiscardChanges() {
+		var confirmResult = confirm("Changes will not be saved. Continue anyway?");
+		
+		return confirmResult;
+	}
+	
+	function _courseSelectChanged(evt) {
+		var elemSelect = document.getElementById('selectCourse');
+		var newCourseName = elemSelect.value;
 		
 		if (newCourseName == NO_COURSE) return;	
+
+		var doCourseSelect = true;;
 		
-		_getCourseStandards (newCourseName);
+		if (page.dirtyBit) {
+			doCourseSelect = _confirmDiscardChanges();
+		}
+		
+		if (doCourseSelect) {
+			_getCourseStandards(newCourseName, false);
+		} else {
+			elemSelect.value = ssData.standardsData.courseName;
+		}
 	}
 	
-	function _saveButtonClicked() {
-		_postCourseStandards();
+	function _saveButtonClicked(evt) {
+		if (page.dirtyBit) {
+			_postCourseStandards();
+		}
 	}
 	
-	function _reloadButtonClicked() {
-		_getCourseStandards(ssData.standardsData.courseName);  // TODO: force flush here?
+	function _reloadButtonClicked(evt) {
+		var doReload = true;
+		if (page.dirtyBit) {
+			doReload = _confirmDiscardChanges();
+		}
+		
+		if (doReload) {
+			_removeCourseStandards();
+			_getCourseStandards(ssData.standardsData.courseName, true);  // TODO: force flush here?
+		}
 	}
 	
 	return {
