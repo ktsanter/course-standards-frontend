@@ -46,12 +46,12 @@ const app = function () {
 		fetch(_buildApiUrl('initialize'))
 			.then((response) => response.json())
 			.then((json) => {
-				console.log('json.status=' + json.status);
+				//console.log('json.status=' + json.status);
 				if (json.status !== 'success') {
 					_setNotice(json.message);
 				}
 				
-				console.log('json.data: ' + JSON.stringify(json.data));
+				//console.log('json.data: ' + JSON.stringify(json.data));
 				_setNotice('');
 				_getCourseList()
 			})
@@ -156,7 +156,7 @@ const app = function () {
 		url += coursename && coursename !== null ? '&coursename=' + coursename : '';
 		url += keyname && keyname !== null ? '&keyname=' + keyname : '';
 		url += flushcache && flushcache != null ? '&flushcache=' + flushcache : '';
-		console.log('buildApiUrl: url=' + url);
+		//console.log('buildApiUrl: url=' + url);
 		return url;
 	}
 
