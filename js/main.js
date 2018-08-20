@@ -39,7 +39,7 @@ const app = function () {
 		apPolicyDoc.text = 'Michigan Virtual Advanced Placement Course Policy';
 		apPolicyDoc.link = AP_POLICY_DOC;
 		
-		page.dirtyBit = false;
+		_setDirtyBit(false);
 		
 		ssData.lastUpdateKey = 'Last_update';
 		ssData.longCourseNameKey = 'Official_course_name';
@@ -339,9 +339,9 @@ const app = function () {
 
 		var allSaveElements = document.getElementsByClassName(SAVE_ME_CLASS);
 		for (var i = 0; i < allSaveElements.length; i++) {
-			allSaveElements[i].addEventListener('change', function() {_setDirtyBit(this, true)}, false);
+			allSaveElements[i].addEventListener('change', function() {_setDirtyBit(true)}, false);
 		}
-		page.dirtyBit = false;
+		_setDirtyBit(false);
 	}
 	
 	function _removeCourseStandards() {
@@ -693,10 +693,12 @@ const app = function () {
 		return btn;
 	}
 	
-	function _setDirtyBit(elem, setTo) {
+	function _setDirtyBit(setTo) {
 		page.dirtyBit = setTo;
 		if (page.dirtyBit) {
 			page.savebutton.innerHTML = '*save';
+		} else {
+			page.savebutton.innerHTML = 'save';
 		}
 	}
 	
