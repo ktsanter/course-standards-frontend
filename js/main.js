@@ -1,7 +1,8 @@
 //
 // TODO: look into splitting into mutliple files
 // TODO: add "view mode" for reporting, including single course only (no dropdown)
-// TODO: add "new course" button
+// TODO: add "delete course" button
+// TODO: add departments
 //
 const app = function () {
 	const PAGE_TITLE = 'Course standards editor'
@@ -24,11 +25,16 @@ const app = function () {
 
 	function init () {
 		page.header = document.getElementById('header');
-		page.courselist = document.getElementById('courselist');
+		page.header.toolname = document.getElementById('toolname');
+		page.header.courses = document.getElementById('courses');
+		page.header.controls = document.getElementById('controls');
+		
 		page.standards = document.getElementById('standards');
 		page.notice = document.getElementById('notice');
+		page.prompt = document.getElementById('prompt');
 		
-		_renderHeader();
+		_initHeader();
+		_initPrompt(false);
 		
 		apPolicyDoc.text = 'Michigan Virtual Advanced Placement Course Policy';
 		apPolicyDoc.link = AP_POLICY_DOC;
@@ -36,6 +42,8 @@ const app = function () {
 		page.dirtyBit = false;
 		
 		ssData.lastUpdateKey = 'Last_update';
+		ssData.longCourseNameKey = 'Official_course_name';
+		ssData.standardsData = {"courseName": null};
 		
 		_getInitialization();
 	}
@@ -87,11 +95,11 @@ const app = function () {
 			})
 	}
 
-	function _getCourseStandards (coursename, forceCacheFlush) {
+	function _getCourseStandards (coursename) {
 		_setNotice('loading course standards...');
 		_removeCourseStandards();
 
-		fetch(_buildApiUrl('standards', coursename, null, forceCacheFlush))
+		fetch(_buildApiUrl('standards', coursename))
 			.then((response) => response.json())
 			.then((json) => {
 				//console.log('json.status=' + json.status);
@@ -109,6 +117,50 @@ const app = function () {
 				console.log(error);
 			})
 	}
+	
+	
+	function _getReload (coursename) {
+		_setNotice('reloading...');
+		
+		fetch(_buildApiUrl('initialize'))
+			.then((response) => response.json())
+			.then((json) => {
+				//console.log('json.status=' + json.status);
+				if (json.status !== 'success') {
+					_setNotice(json.message);
+				}
+				//console.log('json.data: ' + JSON.stringify(json.data));
+				_setNotice('');
+				_getReloadCourseList(coursename);
+			})
+			.catch((error) => {
+				_setNotice('Unexpected error loading course list');
+				console.log(error);
+			})
+	}
+
+	function _getReloadCourseList (coursename) {
+		_setNotice('reloading course list...');
+
+		fetch(_buildApiUrl('courselist'))
+			.then((response) => response.json())
+			.then((json) => {
+				//console.log('json.status=' + json.status);
+				if (json.status !== 'success') {
+					_setNotice(json.message);
+				}
+				//console.log('json.data: ' + JSON.stringify(json.data));
+				ssData.courseList = json.data;
+				_setNotice('');
+				_renderCourseList(json.data);
+				page.courseselect.value = coursename;
+				_getCourseStandards(coursename);
+			})
+			.catch((error) => {
+				_setNotice('Unexpected error loading course list');
+				console.log(error);
+			})
+	}
 
 	function _postCourseStandards () {
 		_setNotice('posting course standards...');
@@ -119,13 +171,7 @@ const app = function () {
 			"courseRowNumber": ssData.standardsData.courseRowNumber, 
 			"standardsChanges": _findStandardsChanges()
 		};
-		console.log('posting course standards: ' + JSON.stringify(postData));
-		
-		/**
-			console.log('actual posting disabled');
-			_setNotice('');
-			return;
-		/**/
+		//console.log('posting course standards: ' + JSON.stringify(postData));
 		
 		fetch(_buildApiUrl('standards', coursename), {
 				method: 'post',
@@ -137,11 +183,12 @@ const app = function () {
 				if (json.status !== 'success') {
 					_setNotice(json.message);
 				}
-				console.log('json.data: ' + JSON.stringify(json.data));
-				
+				//console.log('json.data: ' + JSON.stringify(json.data));
+
+				page.courseselect.options[page.courseselect.selectedIndex].innerHTML = document.getElementById(ssData.longCourseNameKey).value;
 				_setNotice('');
 				
-				_getCourseStandards(coursename, false);
+				_getCourseStandards(coursename);
 			})
 			.catch((error) => {
 				_setNotice('Unexpected error posting course standards');
@@ -149,20 +196,84 @@ const app = function () {
 			})
 	}
 	
-	function _buildApiUrl (datasetname, coursename, keyname, flushcache) {
+	function _postNewCourse (shortCourseName, longCourseName) {
+		_setNotice('posting new course...');
+		
+		var postData = {
+			"shortcoursename": shortCourseName,
+			"longcoursename": longCourseName
+		};
+		console.log('posting new course: ' + JSON.stringify(postData));
+		
+		/*
+			console.log('actual posting disabled');
+			_setNotice('');
+			return;
+		*/
+
+		fetch(_buildApiUrl('newcourse'), {
+				method: 'post',
+				body: JSON.stringify(postData)
+			})
+			.then((response) => response.json())
+			.then((json) => {
+				console.log('json.status=' + json.status);
+				if (json.status !== 'success') {
+					_setNotice(json.message);
+				}
+				console.log('json.data: ' + JSON.stringify(json.data));
+				
+				_loadNewCourse(json.data);
+				_setNotice('');
+
+			})
+			.catch((error) => {
+				_setNotice('Unexpected error posting course standards');
+				console.log(error);
+			})
+	}
+	
+	function _buildApiUrl (datasetname, coursename, keyname) {
 		let url = API_BASE;
 		url += '?key=' + API_KEY;
 		url += datasetname && datasetname !== null ? '&dataset=' + datasetname : '';
 		url += coursename && coursename !== null ? '&coursename=' + coursename : '';
 		url += keyname && keyname !== null ? '&keyname=' + keyname : '';
-		url += flushcache && flushcache != null ? '&flushcache=' + flushcache : '';
 		//console.log('buildApiUrl: url=' + url);
 		return url;
 	}
 
+	function _showPrompt(show) {
+		if (show) {
+			page.prompt.style.display = 'block';
+			page.prompt.style.visibility = 'visible';
+		} else {
+			page.prompt.style.display = 'none'; 
+			page.prompt.style.visibility = 'hidden';
+		}
+	}
+	
+	function _showStandards(show) {
+		if (show) {
+			page.standards.style.display = 'block';
+			page.standards.style.visibility = 'visible';
+		} else {
+			page.standards.style.display = 'none'; 
+			page.standards.style.visibility = 'hidden';
+		}
+	}
+	
+	function _enableControls(enable) {
+		page.courseselect.disabled = !enable;
+		page.savebutton.disabled = !enable;
+		page.reloadbutton.disabled = !enable;
+		page.addbutton.disabled = !enable;
+		page.deletebutton.disabled = !enable;
+	}
+
 	function _setNotice (label) {
 		page.notice.innerHTML = label;
-		/**/
+
 		if (label == '') {
 			page.notice.style.display = 'none'; 
 			page.notice.style.visibility = 'hidden';
@@ -170,37 +281,34 @@ const app = function () {
 			page.notice.style.display = 'block';
 			page.notice.style.visibility = 'visible';
 		}
-		/**/
-	}
-
-	function _renderHeader() {
-		page.header.classList.add('cse-header');
-		
-		var elemTitle = document.createElement('span');
-		elemTitle.innerHTML = PAGE_TITLE ;//+ ' (' + PAGE_VERSION + ')';
-		
-		page.header.appendChild(elemTitle);
 	}
 	
 	function _renderCourseList(data) {
-		var elemSelect = document.createElement('select');
-		elemSelect.id = 'selectCourse';
-		elemSelect.classList.add('cse-control');
+		var elemSelect = page.courseselect;
+		
+		while (elemSelect.firstChild) {
+			elemSelect.removeChild(elemSelect.firstChild);
+		}
+	
+		var tempArray = new Array();
+		for (var i = 0; i < data.length; i++) {
+			tempArray[i] = new Array();
+			tempArray[i][0] = data[i].long;
+			tempArray[i][1] = data[i].short;
+		}
+		tempArray.sort();
 		
 		var elemDefaultOption = document.createElement('option');
 		elemDefaultOption.text = '<select a course>';
 		elemDefaultOption.value = NO_COURSE;
 		elemSelect.appendChild(elemDefaultOption);
 		
-		for (var i = 0; i < data.length; i++) {
+		for (var i = 0; i < tempArray.length; i++) {
 			var elemOption = document.createElement('option');
-			elemOption.text = data[i].long;
-			elemOption.value = data[i].short;
+			elemOption.text = tempArray[i][0];
+			elemOption.value = tempArray[i][1];
 			elemSelect.appendChild(elemOption);
 		}
-		elemSelect.addEventListener('change',  _courseSelectChanged, false);
-
-		page.header.appendChild(elemSelect);
 	}
 	
 	function _renderCourseStandards(data) {
@@ -234,29 +342,11 @@ const app = function () {
 			allSaveElements[i].addEventListener('change', function() {_setDirtyBit(this, true)}, false);
 		}
 		page.dirtyBit = false;
-		
-		_renderControlButtons();
 	}
 	
 	function _removeCourseStandards() {
 		while (page.standards.firstChild) {
 			page.standards.removeChild(page.standards.firstChild);
-		}
-		
-		_removeControlButtons();
-	}
-	
-	function _removeControlButtons() {
-		var elemSave = page.savebutton;
-		if (typeof(elemSave) != 'undefined' && elemSave != null) {
-			page.savebutton.parentNode.removeChild(elemSave);
-			page.savebutton = null;
-		}
-
-		var elemReload = page.reloadbutton;
-		if (typeof(elemReload) != 'undefined' && elemReload != null) {
-			page.reloadbutton.parentNode.removeChild(elemReload);
-			page.reloadbutton = null;
 		}
 	}
 	
@@ -440,26 +530,6 @@ const app = function () {
 		return elemStandard;
 	}
 	
-	function _renderControlButtons() {
-		var elemSave = document.createElement('button');
-		elemSave.id = 'btnSave';
-		elemSave.classList.add('cse-control');
-		elemSave.innerHTML = 'save';
-		elemSave.addEventListener('click', _saveButtonClicked, false);
-
-		var elemReload = document.createElement('button');
-		elemReload.id = 'btnReload';
-		elemReload.classList.add('cse-control');
-		elemReload.innerHTML = 'reload';
-		elemReload.addEventListener('click', _reloadButtonClicked, false);
-		
-		page.savebutton = elemSave;
-		page.reloadbutton = elemReload
-		
-		page.header.appendChild(elemSave);
-		page.header.appendChild(elemReload);
-	}
-	
 	function _findStandardsChanges() {
 		var changeInfo = {
 			"changeFlag": false,
@@ -514,11 +584,172 @@ const app = function () {
 		return isNewSelection;
 	}
 	
+	function _initHeader() {
+		page.header.classList.add('cse-header');
+		
+		page.header.toolname.innerHTML = PAGE_TITLE ;//+ ' (' + PAGE_VERSION + ')';
+		
+		var elemSelect = document.createElement('select');
+		elemSelect.id = 'selectCourse';
+		elemSelect.classList.add('cse-control');
+		elemSelect.addEventListener('change',  _courseSelectChanged, false);
+
+		var elemNew = _makeButton('btnNew', 'cse-control', 'new', _addButtonClicked);
+		var elemSave= _makeButton('btnSave', 'cse-control', 'save', _saveButtonClicked);
+		var elemReload = _makeButton('btnReload', 'cse-control', 'reload', _reloadButtonClicked);
+		var elemDelete = _makeButton('btnDelete', 'cse-control', 'delete', _deleteButtonClicked);
+		
+		page.courseselect = elemSelect;
+		page.addbutton = elemNew;
+		page.savebutton = elemSave;
+		page.reloadbutton = elemReload;
+		page.deletebutton = elemDelete;
+		
+		page.header.courses.appendChild(elemSelect);
+		page.header.controls.appendChild(elemNew);	
+		page.header.controls.appendChild(elemSave);
+		page.header.controls.appendChild(elemReload);
+		page.header.controls.appendChild(elemDelete);
+	}
+	
+	function _initPrompt() {
+		_showPrompt(false);
+		
+		page.prompt.classList.add('cse-standards-text');
+		
+		var elemTitle = document.createElement('div');
+		elemTitle.classList.add('cse-category-title');
+		elemTitle.innerHTML = 'Add new course';
+		
+		var elemShortName = document.createElement('input');
+		elemShortName.type = 'text';
+		elemShortName.id = 'promptShortName';
+		elemShortName.maxlength = 30;
+		elemShortName.size = elemShortName.maxLength;
+		elemShortName.classList.add('cse-standards-text');
+		
+		var elemLongName = document.createElement('input');
+		elemLongName.type = 'text';
+		elemLongName.id = 'promptLongName';
+		elemLongName.maxlength = 100;
+		elemLongName.size = elemLongName.maxlength;
+		elemLongName.classList.add('cse-standards-text');
+
+		var elemTable = document.createElement('table');
+		var elemRow1 = document.createElement('tr');
+		var elemCell1_1 = document.createElement('td');
+		var elemCell1_2 = document.createElement('td');
+		
+		var elemRow2 = document.createElement('tr');
+		var elemCell2_1 = document.createElement('td');
+		var elemCell2_2 = document.createElement('td');
+		
+		var elemRow3 = document.createElement('tr');
+		var elemCell3_1 = document.createElement('td');
+		var elemCell3_2 = document.createElement('td');
+
+		elemCell1_1.innerHTML = 'short course name';
+		elemCell1_2.appendChild(elemShortName);
+		var elemSpan = document.createElement('span');
+		elemSpan.innerHTML = '&nbsp; &nbsp; please use only numbers, characters, and underscores - no spaces or other punctuation';
+		elemCell1_2.appendChild(elemSpan);
+		
+		elemCell2_1.innerHTML = 'official course name';
+		elemCell2_2.appendChild(elemLongName);
+		
+		elemRow1.appendChild(elemCell1_1);
+		elemRow1.appendChild(elemCell1_2);
+		elemRow2.appendChild(elemCell2_1);
+		elemRow2.appendChild(elemCell2_2);
+		
+		elemTable.appendChild(elemRow1);
+		elemTable.appendChild(elemRow2);
+		elemTable.appendChild(elemRow3);
+
+		var elemPromptConfirm = _makeButton('btnPromptConfirm', 'cse-control-inverted', 'add new course', function() {_completeAddCourse(true);});
+		var elemPromptCancel = _makeButton('btnPromptCancel', 'cse-control-inverted', 'cancel', function() {_completeAddCourse(false);});
+		
+		var elemPromptError = document.createElement('span');
+		elemPromptError.classList.add('cse-standards-text');
+		elemPromptError.style.color = 'red';
+		
+		page.prompt.appendChild(elemTitle);
+		page.prompt.appendChild(elemTable);
+		page.prompt.appendChild(elemPromptConfirm);
+		page.prompt.appendChild(elemPromptCancel);
+		page.prompt.appendChild(elemPromptError);
+		
+		page.promptshortname = elemShortName;
+		page.promptlongname = elemLongName;
+		page.prompt.error = elemPromptError;
+	}
+	
+	function _makeButton(id, className, label, listener) {
+		var btn = document.createElement('button');
+		btn.id = id;
+		btn.classList.add(className);
+		btn.innerHTML = label;
+		btn.addEventListener('click', listener, false);
+		return btn;
+	}
+	
 	function _setDirtyBit(elem, setTo) {
 		page.dirtyBit = setTo;
 		if (page.dirtyBit) {
 			page.savebutton.innerHTML = '*save';
 		}
+	}
+	
+	function _enableAddCoursePrompt(enable) {
+		_enableControls(!enable);
+		_showStandards(!enable);
+		_showPrompt(enable);		
+	}
+		
+	function _completeAddCourse(confirmed) {
+		page.prompt.error.innerHTML = '';
+		if (confirmed) {
+			var newShortName = page.promptshortname.value;
+			var newLongName = page.promptlongname.value;
+			
+			console.log('add: "' + newShortName + '" "' + newLongName + '"');
+			var sanitizedShort = newShortName.replace(/[^\w]/gi, '');
+			var sanitizedLong = newLongName.replace(/[^\w\"'()\- &]/gi, '');
+			console.log("short: " + newShortName + " sanitized: " + sanitizedShort);
+			console.log("long: " + newLongName + " sanitized: " + sanitizedLong);
+			if (newShortName != sanitizedShort) {
+				page.prompt.error.innerHTML = 'Please use only letters, numbers, and underscores in the short course name';
+				return;
+			}
+			if (sanitizedShort == '' || sanitizedLong == '') {
+				page.prompt.error.innerHTML = 'The short and official names cannot be blank';
+				return;
+			}
+			
+			_postNewCourse(sanitizedShort, sanitizedLong);
+			
+		} else {
+			_enableAddCoursePrompt(false);
+		}
+	}
+	
+	function _loadNewCourse(data) {
+		if (!data.success) {
+			page.prompt.error.innerHTML = 'error: ' + data.details.error;
+			return;
+		}
+		console.log("loadnewcourse: data=" + JSON.stringify(data.details));
+		_enableAddCoursePrompt(false);
+		//_getInitialization(data.details.shortcoursename);
+		_getReload(data.details.shortcoursename);
+		
+		//console.log('add course: load new course');
+		//if success:  _enableAddCoursePrompt(false);		
+	}
+	
+	function _deleteCourse(coursename) {
+		console.log('deleteCourse: send POST');
+		console.log('deleteCourse: reload with no course selected');
 	}
 	
 	function _confirmDiscardChanges() {
@@ -528,7 +759,7 @@ const app = function () {
 	}
 	
 	function _courseSelectChanged(evt) {
-		var elemSelect = document.getElementById('selectCourse');
+		var elemSelect = page.courseselect;
 		var newCourseName = elemSelect.value;
 		
 		if (newCourseName == NO_COURSE) return;	
@@ -540,7 +771,7 @@ const app = function () {
 		}
 		
 		if (doCourseSelect) {
-			_getCourseStandards(newCourseName, false);
+			_getCourseStandards(newCourseName);
 		} else {
 			elemSelect.value = ssData.standardsData.courseName;
 		}
@@ -553,17 +784,44 @@ const app = function () {
 	}
 	
 	function _reloadButtonClicked(evt) {
+		var coursename = ssData.standardsData.courseName;
+		if (coursename == null || !coursename) return;
+
 		var doReload = true;
 		if (page.dirtyBit) {
 			doReload = _confirmDiscardChanges();
 		}
 		
 		if (doReload) {
-			_removeCourseStandards();
-			_getCourseStandards(ssData.standardsData.courseName, true);  // TODO: force flush here?
+			_getReload(ssData.standardsData.courseName);
 		}
 	}
 	
+	function _addButtonClicked(evt) {
+		var doAdd = true;
+		if (page.dirtyBit) {
+			doAdd = _confirmDiscardChanges();
+		}
+		
+		if (doAdd) {
+			page.promptshortname.value = '';
+			page.promptlongname.value = '';
+			_enableAddCoursePrompt(true);
+		}
+	}
+
+	function _deleteButtonClicked(evt) {
+		var coursename = ssData.standardsData.courseName;
+		if (coursename == null || !coursename) return;
+		
+		var longName = ssData.standardsData.standards[ssData.longCourseNameKey];
+
+		var confirmed = confirm('"' + longName + '" will be permanently deleted, and cannot be recovered.  Continue with the deletion?');
+		if (confirmed) {
+			_deleteCourse(coursename);
+		}
+	}
+
 	return {
 		init: init
  	};
