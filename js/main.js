@@ -3,6 +3,7 @@
 // TODO: add "view mode" for reporting, including single course only (no dropdown)
 // TODO: add "delete course" button
 // TODO: add departments
+// TODO: enable/disable controls around major events
 //
 const app = function () {
 	const PAGE_TITLE = 'Course standards editor'
@@ -44,6 +45,8 @@ const app = function () {
 		ssData.lastUpdateKey = 'Last_update';
 		ssData.longCourseNameKey = 'Official_course_name';
 		ssData.standardsData = {"courseName": null};
+		
+		page.notice.classList.add('cse-notice');
 		
 		_getInitialization();
 	}
@@ -96,8 +99,10 @@ const app = function () {
 	}
 
 	function _getCourseStandards (coursename) {
-		_setNotice('loading course standards...');
 		_removeCourseStandards();
+		if (coursename == NO_COURSE) return;
+		
+		_setNotice('loading course standards...');
 
 		fetch(_buildApiUrl('standards', coursename))
 			.then((response) => response.json())
@@ -203,7 +208,6 @@ const app = function () {
 			"shortcoursename": shortCourseName,
 			"longcoursename": longCourseName
 		};
-		console.log('posting new course: ' + JSON.stringify(postData));
 		
 		/*
 			console.log('actual posting disabled');
@@ -217,18 +221,51 @@ const app = function () {
 			})
 			.then((response) => response.json())
 			.then((json) => {
+				//console.log('json.status=' + json.status);
+				if (json.status !== 'success') {
+					_setNotice(json.message);
+				}
+				//console.log('json.data: ' + JSON.stringify(json.data));
+				
+				_loadNewCourse(json.data);
+
+			})
+			.catch((error) => {
+				_setNotice('Unexpected error posting course standards');
+				console.log(error);
+			})
+	}
+	
+	function _postDeleteCourse (shortCourseName) {
+		_setNotice('posting course deletion...');
+		
+		var postData = {
+			"shortcoursename": shortCourseName
+		};
+
+		/*
+			console.log('actual posting disabled');
+			_setNotice('');
+			return;
+		*/
+
+		fetch(_buildApiUrl('delete'), {
+				method: 'post',
+				body: JSON.stringify(postData)
+			})
+			.then((response) => response.json())
+			.then((json) => {
 				console.log('json.status=' + json.status);
 				if (json.status !== 'success') {
 					_setNotice(json.message);
 				}
 				console.log('json.data: ' + JSON.stringify(json.data));
 				
-				_loadNewCourse(json.data);
-				_setNotice('');
+				_loadAfterDeleteCourse(json.data);
 
 			})
 			.catch((error) => {
-				_setNotice('Unexpected error posting course standards');
+				_setNotice('Unexpected error posting course deletion');
 				console.log(error);
 			})
 	}
@@ -714,11 +751,9 @@ const app = function () {
 			var newShortName = page.promptshortname.value;
 			var newLongName = page.promptlongname.value;
 			
-			console.log('add: "' + newShortName + '" "' + newLongName + '"');
 			var sanitizedShort = newShortName.replace(/[^\w]/gi, '');
-			var sanitizedLong = newLongName.replace(/[^\w\"'()\- &]/gi, '');
-			console.log("short: " + newShortName + " sanitized: " + sanitizedShort);
-			console.log("long: " + newLongName + " sanitized: " + sanitizedLong);
+			var sanitizedLong = newLongName.replace(/[^\w\"'()\- &:]/gi, '');
+
 			if (newShortName != sanitizedShort) {
 				page.prompt.error.innerHTML = 'Please use only letters, numbers, and underscores in the short course name';
 				return;
@@ -736,23 +771,32 @@ const app = function () {
 	}
 	
 	function _loadNewCourse(data) {
+		_setNotice('');
+
 		if (!data.success) {
 			page.prompt.error.innerHTML = 'error: ' + data.details.error;
 			return;
 		}
-		console.log("loadnewcourse: data=" + JSON.stringify(data.details));
+
+		_removeCourseStandards();
 		_enableAddCoursePrompt(false);
-		//_getInitialization(data.details.shortcoursename);
 		_getReload(data.details.shortcoursename);
-		
-		//console.log('add course: load new course');
-		//if success:  _enableAddCoursePrompt(false);		
 	}
 	
-	function _deleteCourse(coursename) {
-		console.log('deleteCourse: send POST');
-		console.log('deleteCourse: reload with no course selected');
-	}
+	function _loadAfterDeleteCourse(data) {
+		console.log('loadAfterDeleteCourse: data=' + JSON.stringify(data));
+		_setNotice('');
+		
+		if (!data.success) {
+			console.log('detail: ' + JSON.stringify(data.details));
+			console.log('error: ' + JSON.stringify(data.details.error));
+			_setNotice('error in deletion: ' + data.details.error);
+			return;
+		}
+
+		_removeCourseStandards();
+		_getReload(NO_COURSE);
+}
 	
 	function _confirmDiscardChanges() {
 		var confirmResult = confirm("Changes will not be saved. Continue anyway?");
@@ -820,7 +864,7 @@ const app = function () {
 
 		var confirmed = confirm('"' + longName + '" will be permanently deleted, and cannot be recovered.  Continue with the deletion?');
 		if (confirmed) {
-			_deleteCourse(coursename);
+			_postDeleteCourse(coursename);
 		}
 	}
 

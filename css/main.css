@@ -49,6 +49,11 @@ body {
 	padding-bottom: 2px;
 }
 
+.cse-notice {
+	color: blue;
+	font-style: italic;
+}
+
 .cse-category-title {
 	color: var(--cse-color1);
 	background-color: var(--cse-color2);
@@ -60,6 +65,7 @@ body {
 	padding-left: 4px;
 	padding-right: 4px;
 }
+
 .cse-standards {
 	margin-top: 4px;
 }
