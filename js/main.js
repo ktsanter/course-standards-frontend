@@ -1,9 +1,7 @@
 //
 // TODO: look into splitting into mutliple files
 // TODO: add "view mode" for reporting, including single course only (no dropdown)
-// TODO: add "delete course" button
-// TODO: add departments
-// TODO: enable/disable controls around major events
+// TODO: add departments - separate selection spreadsheets
 //
 const app = function () {
 	const PAGE_TITLE = 'Course standards editor'
@@ -11,7 +9,14 @@ const app = function () {
 	
 	const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec';
 	const API_KEY = 'MVstandardsAPI';
-	const DEPARTMENTS = ['cte', 'english', 'math', 'socialstudies', 'science', 'worldlanguage'];
+	const DEPARTMENTS = [
+		{'shortname': 'cte', 'longname': 'CTE'},
+		{'shortname': 'ela', 'longname': 'ELA/VPA'},
+		{'shortname': 'math', 'longname': 'Mathematics'},
+		{'shortname': 'socialstudies', 'longname': 'Social Studies'},
+		{'shortname': 'science', 'longname': 'Science'},
+		{'shortname': 'worldlanguages', 'longname': 'World Languages'}
+	];
 	
 	const NO_COURSE = 'NO_COURSE';
 	
@@ -20,6 +25,7 @@ const app = function () {
 	
 	const SAVE_ME_CLASS = 'cse-save-me';
 	
+	const department = {'shortname': 'unknown', 'longname': '???'};
 	const page = {};
 	const apPolicyDoc = {};
 	const ssData = {};
@@ -32,28 +38,52 @@ const app = function () {
 		
 		page.standards = document.getElementById('standards');
 		page.notice = document.getElementById('notice');
+		page.notice.classList.add('cse-notice');
 		page.prompt = document.getElementById('prompt');
-		
-		_initHeader();
-		_initPrompt(false);
-		
-		apPolicyDoc.text = 'Michigan Virtual Advanced Placement Course Policy';
-		apPolicyDoc.link = AP_POLICY_DOC;
-		
-		_setDirtyBit(false);
 		
 		ssData.lastUpdateKey = 'Last_update';
 		ssData.longCourseNameKey = 'Official_course_name';
 		ssData.standardsData = {"courseName": null};
+
+		apPolicyDoc.text = 'Michigan Virtual Advanced Placement Course Policy';
+		apPolicyDoc.link = AP_POLICY_DOC;
+
 		
-		page.notice.classList.add('cse-notice');
-		
-		_getInitialization();
+		if (!_validateParams()) {
+			_setNotice('error: invalid parameter');
+			
+		} else {
+			_initHeader();
+			_initPrompt(false);
+			_setDirtyBit(false);
+			_getInitialization();
+		}
 	}
 
+	function _validateParams() {
+		var result = false;
+		
+		var urlParams = new URLSearchParams(window.location.search);
+		var paramName = 'department';
+		if (urlParams.has(paramName)) {
+			var param = urlParams.get(paramName);
+			
+			for (var i = 0; i < DEPARTMENTS.length && !result; i++) {
+				if (param == DEPARTMENTS[i].shortname) {
+					department.shortname = param;
+					department.longname = DEPARTMENTS[i].longname;
+					result = true;			
+				}					
+			}
+		}  
+
+		return result;
+	}
+	
 	function _getInitialization() {
 		_setNotice('initializing...');
-
+		_enableControls(false);
+		
 		fetch(_buildApiUrl('initialize'))
 			.then((response) => response.json())
 			.then((json) => {
@@ -64,7 +94,7 @@ const app = function () {
 				
 				//console.log('json.data: ' + JSON.stringify(json.data));
 				_setNotice('');
-				_getCourseList()
+				_getCourseList();
 			})
 			.catch((error) => {
 				_setNotice('Unexpected error loading course list');
@@ -73,12 +103,8 @@ const app = function () {
 	}
 	
 	function _getCourseList () {
-		page.content.innerHTML = '';
-		_getCourseList();
-	}
-
-	function _getCourseList () {
 		_setNotice('loading course list...');
+		_enableControls(false);
 
 		fetch(_buildApiUrl('courselist'))
 			.then((response) => response.json())
@@ -99,10 +125,11 @@ const app = function () {
 	}
 
 	function _getCourseStandards (coursename) {
-		_removeCourseStandards();
 		if (coursename == NO_COURSE) return;
 		
 		_setNotice('loading course standards...');
+		_enableControls(false);
+		_removeCourseStandards();
 
 		fetch(_buildApiUrl('standards', coursename))
 			.then((response) => response.json())
@@ -126,6 +153,7 @@ const app = function () {
 	
 	function _getReload (coursename) {
 		_setNotice('reloading...');
+		_enableControls(false);
 		
 		fetch(_buildApiUrl('initialize'))
 			.then((response) => response.json())
@@ -146,6 +174,7 @@ const app = function () {
 
 	function _getReloadCourseList (coursename) {
 		_setNotice('reloading course list...');
+		_enableControls(false);
 
 		fetch(_buildApiUrl('courselist'))
 			.then((response) => response.json())
@@ -169,6 +198,7 @@ const app = function () {
 
 	function _postCourseStandards () {
 		_setNotice('posting course standards...');
+		_enableControls(false);
 		var coursename = ssData.standardsData.courseName;
 		
 		var postData = {
@@ -203,6 +233,7 @@ const app = function () {
 	
 	function _postNewCourse (shortCourseName, longCourseName) {
 		_setNotice('posting new course...');
+		_enableControls(false);
 		
 		var postData = {
 			"shortcoursename": shortCourseName,
@@ -238,6 +269,7 @@ const app = function () {
 	
 	function _postDeleteCourse (shortCourseName) {
 		_setNotice('posting course deletion...');
+		_enableControls(false);
 		
 		var postData = {
 			"shortcoursename": shortCourseName
@@ -273,6 +305,7 @@ const app = function () {
 	function _buildApiUrl (datasetname, coursename, keyname) {
 		let url = API_BASE;
 		url += '?key=' + API_KEY;
+		url += '&department=' + department.shortname;
 		url += datasetname && datasetname !== null ? '&dataset=' + datasetname : '';
 		url += coursename && coursename !== null ? '&coursename=' + coursename : '';
 		url += keyname && keyname !== null ? '&keyname=' + keyname : '';
@@ -346,6 +379,8 @@ const app = function () {
 			elemOption.value = tempArray[i][1];
 			elemSelect.appendChild(elemOption);
 		}
+		
+		_enableControls(true);
 	}
 	
 	function _renderCourseStandards(data) {
@@ -379,6 +414,7 @@ const app = function () {
 			allSaveElements[i].addEventListener('change', function() {_setDirtyBit(true)}, false);
 		}
 		_setDirtyBit(false);
+		_enableControls(true);
 	}
 	
 	function _removeCourseStandards() {
@@ -624,25 +660,25 @@ const app = function () {
 	function _initHeader() {
 		page.header.classList.add('cse-header');
 		
-		page.header.toolname.innerHTML = PAGE_TITLE ;//+ ' (' + PAGE_VERSION + ')';
-		
-		var elemSelect = document.createElement('select');
-		elemSelect.id = 'selectCourse';
-		elemSelect.classList.add('cse-control');
-		elemSelect.addEventListener('change',  _courseSelectChanged, false);
+		page.header.toolname.innerHTML = PAGE_TITLE + ' (' + department.longname + ')';//+ ' (' + PAGE_VERSION + ')';
+				
+		var elemCourseSelect = document.createElement('select');
+		elemCourseSelect.id = 'selectCourse';
+		elemCourseSelect.classList.add('cse-control');
+		elemCourseSelect.addEventListener('change',  _courseSelectChanged, false);
 
 		var elemNew = _makeButton('btnNew', 'cse-control', 'new', _addButtonClicked);
 		var elemSave= _makeButton('btnSave', 'cse-control', 'save', _saveButtonClicked);
 		var elemReload = _makeButton('btnReload', 'cse-control', 'reload', _reloadButtonClicked);
 		var elemDelete = _makeButton('btnDelete', 'cse-control', 'delete', _deleteButtonClicked);
 		
-		page.courseselect = elemSelect;
+		page.courseselect = elemCourseSelect;
 		page.addbutton = elemNew;
 		page.savebutton = elemSave;
 		page.reloadbutton = elemReload;
 		page.deletebutton = elemDelete;
 		
-		page.header.courses.appendChild(elemSelect);
+		page.header.courses.appendChild(elemCourseSelect);
 		page.header.controls.appendChild(elemNew);	
 		page.header.controls.appendChild(elemSave);
 		page.header.controls.appendChild(elemReload);
@@ -803,7 +839,7 @@ const app = function () {
 		
 		return confirmResult;
 	}
-	
+
 	function _courseSelectChanged(evt) {
 		var elemSelect = page.courseselect;
 		var newCourseName = elemSelect.value;

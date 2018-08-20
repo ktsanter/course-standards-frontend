@@ -1,6 +1,7 @@
 .cse-colorscheme {
 	--cse-color1: #2d3436;
 	--cse-color2: #f8f8f8;
+	--cse-color3: #c8c8c8;
 }
 
 body {
@@ -26,6 +27,18 @@ body {
 .cse-control {
 	color: var(--cse-color1);
 	background-color: var(--cse-color2);
+	margin-left: 3px;
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 7px;
+	font-size: 12px;
+	margin-top: 2px;
+	margin-bottom: 2px;
+}
+
+.cse-control:disabled {
+	color: var(--cse-color1);
+	background-color: var(--cse-color3);
 	margin-left: 3px;
 	border-style: solid;
 	border-width: 1px;
