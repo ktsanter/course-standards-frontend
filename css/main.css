@@ -36,6 +36,11 @@ body {
 	margin-bottom: 2px;
 }
 
+.cse-control.cse-control-embed {
+	margin-left: 10px;
+	padding-top: 2px;
+}
+
 .cse-control:disabled {
 	color: var(--cse-color1);
 	background-color: var(--cse-color3);

@@ -1,11 +1,11 @@
 //
 // TODO: look into splitting into mutliple files
-// TODO: add "view mode" for reporting, including single course only (no dropdown) - rework query params
 // TODO: generate link and/or embed code for BB from editor
 //
 const app = function () {
 	const PAGE_TITLE = 'Course standards'
 	const PAGE_VERSION = 'v0.1';
+	const LIVE_URL = 'https://ktsanter.github.io/course-standards-frontend/';  //
 	
 	const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec';
 	const API_KEY = 'MVstandardsAPI';
@@ -40,6 +40,7 @@ const app = function () {
 		page.notice = document.getElementById('notice');
 		page.notice.classList.add('cse-notice');
 		page.prompt = document.getElementById('prompt');
+		page.embed = document.getElementById('embed');
 		
 		ssData.lastUpdateKey = 'Last_update';
 		ssData.longCourseNameKey = 'Official_course_name';
@@ -74,7 +75,7 @@ const app = function () {
 		var urlParams = new URLSearchParams(window.location.search);
 		var departmentParam = urlParams.has('department') ? urlParams.get('department') : null;
 		params.course = urlParams.has('course') ? urlParams.get('course') : null;
-		params.editmode = urlParams.has('editx') ? urlParams.get('editx') : false;
+		params.editmode = urlParams.has('editx') ? urlParams.get('editx') == 'true' : false;
 		
 		// params must include department
 		if (departmentParam != null) {
@@ -88,7 +89,6 @@ const app = function () {
 		}
 		
 		if (params.editmode && params.course == null) result = false;
-		console.log('params= ' + JSON.stringify(params));
 		
 		return result;
 	}
@@ -326,7 +326,7 @@ const app = function () {
 		url += datasetname && datasetname !== null ? '&dataset=' + datasetname : '';
 		url += coursename && coursename !== null ? '&coursename=' + coursename : '';
 		url += keyname && keyname !== null ? '&keyname=' + keyname : '';
-		console.log('buildApiUrl: url=' + url);
+		//console.log('buildApiUrl: url=' + url);
 		return url;
 	}
 
@@ -356,6 +356,7 @@ const app = function () {
 		page.reloadbutton.disabled = !enable;
 		page.addbutton.disabled = !enable;
 		page.deletebutton.disabled = !enable;
+		page.embedbutton.disabled = !enable;
 	}
 
 	function _setNotice (label) {
@@ -496,7 +497,6 @@ const app = function () {
 		elemPrompt.innerHTML = keyInfo.keyPrompt;
 		
 		if (params.editmode) {
-			console.log('edit mode');
 			var elemValue = document.createElement('input');
 			elemValue.type = 'text';
 			elemValue.id = keyName;
@@ -506,7 +506,6 @@ const app = function () {
 			elemValue.maxLength = 200;
 			elemValue.size = 40;
 		} else {
-			console.log('view mode');
 			var elemValue = document.createElement('span');
 			elemValue.id = keyName;
 			elemValue.innerHTML = standardValue;
@@ -715,12 +714,15 @@ const app = function () {
 		var elemSave= _makeButton('btnSave', 'cse-control', '💾', 'save course', _saveButtonClicked);
 		var elemReload = _makeButton('btnReload', 'cse-control', '🔄', 'reload course', _reloadButtonClicked);
 		var elemDelete = _makeButton('btnDelete', 'cse-control', '✖️', 'delete course', _deleteButtonClicked);
+		var elemEmbed = _makeButton('btnEmbed', 'cse-control', 'embed', 'embed HTML code', _embedButtonClicked);
+		elemEmbed.classList.add('cse-control-embed');
 		
 		page.courseselect = elemCourseSelect;
 		page.addbutton = elemNew;
 		page.savebutton = elemSave;
 		page.reloadbutton = elemReload;
 		page.deletebutton = elemDelete;
+		page.embedbutton = elemEmbed;
 			
 		if (params.editmode) {
 			page.header.courses.appendChild(elemCourseSelect);
@@ -728,6 +730,7 @@ const app = function () {
 			page.header.controls.appendChild(elemSave);
 			page.header.controls.appendChild(elemReload);
 			page.header.controls.appendChild(elemDelete);
+			page.header.controls.appendChild(elemEmbed);
 		}
 	}
 	
@@ -949,6 +952,33 @@ const app = function () {
 		if (confirmed) {
 			_postDeleteCourse(coursename);
 		}
+	}
+
+	function copyEmbedCodeToClipboard() {
+		var embedCode = '<iframe width="800" height="600" '
+		embedCode += 'src="' + LIVE_URL;
+		embedCode += '?department=' + params.department.shortname;
+		embedCode += '&course=' + params.course;
+		embedCode += '">';
+		embedCode += '</iframe>';
+		/*
+		<p><iframe width="800" height="600" src="https://ktsanter.github.io/course-standards/?course=%22apcsa%22&amp;controls=%22false%22&amp;summarytype=%22instructor%22"></iframe></p>
+		*/
+		
+		var embedElement = page.embed;
+		embedElement.value = embedCode;
+		embedElement.select();
+		document.execCommand("Copy");
+		embedElement.selectionEnd = embedElement.selectionStart;
+
+		_setNotice('embed code copied to clipboard');
+	}
+	
+	function _embedButtonClicked(evt) {
+		var coursename = ssData.standardsData.courseName;
+		if (coursename == null || !coursename) return;
+		
+		copyEmbedCodeToClipboard();
 	}
 
 	return {
