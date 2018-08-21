@@ -1,11 +1,12 @@
 //
 // TODO: look into splitting into mutliple files
 // TODO: edit the key prompts for uniformity
+// TODO: navmode for view
 //
 const app = function () {
 	const PAGE_TITLE = 'Course standards'
 	const PAGE_VERSION = 'v0.1';
-	const LIVE_URL = 'https://ktsanter.github.io/course-standards-frontend/';  //
+	const LIVE_URL = 'https://ktsanter.github.io/course-standards-frontend/';  
 	
 	const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec';
 	const API_KEY = 'MVstandardsAPI';
@@ -71,30 +72,30 @@ const app = function () {
 		/*
 		* params:
 		*    department:  short name for department (required)
-		*    course: short name for course, required for view mode, ignored for edit mode
-		*    editx: true for editor mode - default is view mode
+		*	 editmode: use editor mode, otherwise use view mode
+		*	 navmode: include course dropdown in viewmode, ignored otherwise
+		*    course: short name for course, required for viewmode without navmode, otherwise ignored
 		*/
 		var result = false;
 		
-		params.department = {'shortname': null, 'longname': null};
 		
 		var urlParams = new URLSearchParams(window.location.search);
 		var departmentParam = urlParams.has('department') ? urlParams.get('department') : null;
 		params.course = urlParams.has('course') ? urlParams.get('course') : null;
-		params.editmode = urlParams.has('editx') ? urlParams.get('editx') == 'true' : false;
+		params.editmode = urlParams.has('editmode');
+		params.navmode = urlParams.has('navmode');
 		
-		// params must include department
+		params.department = {};
 		if (departmentParam != null) {
 			for (var i = 0; i < DEPARTMENTS.length && !result; i++) {
 				if (departmentParam == DEPARTMENTS[i].shortname) {
-					params.department.shortname = departmentParam;
-					params.department.longname = DEPARTMENTS[i].longname;
+					params.department = {'shortname': departmentParam, 'longname': DEPARTMENTS[i].longname};
 					result = true;			
 				}					
 			}			
 		}
 		
-		if (params.editmode && params.course == null) result = false;
+		console.log('params: ' + JSON.stringify(params));
 		
 		return result;
 	}
@@ -113,7 +114,7 @@ const app = function () {
 				
 				//console.log('json.data: ' + JSON.stringify(json.data));
 				_setNotice('');
-				if (params.editmode) {
+				if (params.editmode  || params.navmode) {
 					_getCourseList();
 				} else {
 					_getCourseStandards(params.course);
@@ -774,8 +775,10 @@ const app = function () {
 		page.deletebutton = elemDelete;
 		page.embedbutton = elemEmbed;
 			
-		if (params.editmode) {
+		if (params.editmode || params.navmode) {
 			page.header.courses.appendChild(elemCourseSelect);
+		}
+		if (params.editmode) {
 			page.header.controls.appendChild(elemNew);	
 			page.header.controls.appendChild(elemSave);
 			page.header.controls.appendChild(elemReload);
@@ -1011,9 +1014,6 @@ const app = function () {
 		embedCode += '&course=' + ssData.standardsData.courseName;
 		embedCode += '">';
 		embedCode += '</iframe>';
-		/*
-		<p><iframe width="800" height="600" src="https://ktsanter.github.io/course-standards/?course=%22apcsa%22&amp;controls=%22false%22&amp;summarytype=%22instructor%22"></iframe></p>
-		*/
 		
 		var embedElement = page.embed;
 		embedElement.value = embedCode;
