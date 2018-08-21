@@ -5,6 +5,7 @@ const app = function () {
 	const PAGE_TITLE = 'Course standards'
 	const PAGE_VERSION = 'v0.1';
 	const LIVE_URL = 'https://ktsanter.github.io/course-standards-frontend/';  
+	const LOGO = './img/MVlogo_small6.png';
 	
 	const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec';
 	const API_KEY = 'MVstandardsAPI';
@@ -34,6 +35,7 @@ const app = function () {
 
 	function init () {
 		page.header = document.getElementById('header');
+		page.header.logo = document.getElementById('logo');
 		page.header.toolname = document.getElementById('toolname');
 		page.header.courses = document.getElementById('courses');
 		page.header.controls = document.getElementById('controls');
@@ -751,6 +753,11 @@ const app = function () {
 	
 	function _initHeader() {
 		page.header.classList.add('cse-header');
+		
+		var elemImg = document.createElement('img');
+		elemImg.src = LOGO;
+		elemImg.classList.add('cse-logo');
+		page.header.logo.appendChild(elemImg);
 		
 		page.header.toolname.innerHTML = PAGE_TITLE + ' (' + params.department.longname + ')';
 		
