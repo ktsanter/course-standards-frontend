@@ -5,7 +5,7 @@ const app = function () {
 	const PAGE_TITLE = 'Course standards'
 	const PAGE_VERSION = 'v0.1';
 	const LIVE_URL = 'https://ktsanter.github.io/course-standards-frontend/';  
-	const LOGO = './img/MVlogo_small6.png';
+	const LOGO = './img/Horizontal_Stacked_FullColor.png'; //'./img/MVlogo_small6.png';
 	
 	const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec';
 	const API_KEY = 'MVstandardsAPI';
