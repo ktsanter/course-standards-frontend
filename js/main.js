@@ -1,21 +1,21 @@
 //
 // TODO: look into splitting into mutliple files
-// TODO: add "view mode" for reporting, including single course only (no dropdown)
-// TODO: add departments - separate selection spreadsheets
+// TODO: add "view mode" for reporting, including single course only (no dropdown) - rework query params
+// TODO: icons for buttons
 //
 const app = function () {
-	const PAGE_TITLE = 'Course standards editor'
+	const PAGE_TITLE = 'Course standards'
 	const PAGE_VERSION = 'v0.1';
 	
 	const API_BASE = 'https://script.google.com/macros/s/AKfycbymCm2GsamiaaWMfMr_o3rK579rz988lFK5uaBaRXVJH_8ViDg/exec';
 	const API_KEY = 'MVstandardsAPI';
 	const DEPARTMENTS = [
 		{'shortname': 'cte', 'longname': 'CTE'},
-		{'shortname': 'ela', 'longname': 'ELA/VPA'},
+		{'shortname': 'elavpa', 'longname': 'ELA/VPA'},
 		{'shortname': 'math', 'longname': 'Mathematics'},
-		{'shortname': 'socialstudies', 'longname': 'Social Studies'},
+		{'shortname': 'ss', 'longname': 'Social Studies'},
 		{'shortname': 'science', 'longname': 'Science'},
-		{'shortname': 'worldlanguages', 'longname': 'World Languages'}
+		{'shortname': 'wl', 'longname': 'World Languages'}
 	];
 	
 	const NO_COURSE = 'NO_COURSE';
@@ -287,11 +287,11 @@ const app = function () {
 			})
 			.then((response) => response.json())
 			.then((json) => {
-				console.log('json.status=' + json.status);
+				//console.log('json.status=' + json.status);
 				if (json.status !== 'success') {
 					_setNotice(json.message);
 				}
-				console.log('json.data: ' + JSON.stringify(json.data));
+				//console.log('json.data: ' + JSON.stringify(json.data));
 				
 				_loadAfterDeleteCourse(json.data);
 
@@ -660,17 +660,17 @@ const app = function () {
 	function _initHeader() {
 		page.header.classList.add('cse-header');
 		
-		page.header.toolname.innerHTML = PAGE_TITLE + ' (' + department.longname + ')';//+ ' (' + PAGE_VERSION + ')';
+		page.header.toolname.innerHTML = PAGE_TITLE + ' (' + department.longname + ')';
 				
 		var elemCourseSelect = document.createElement('select');
 		elemCourseSelect.id = 'selectCourse';
 		elemCourseSelect.classList.add('cse-control');
 		elemCourseSelect.addEventListener('change',  _courseSelectChanged, false);
 
-		var elemNew = _makeButton('btnNew', 'cse-control', 'new', _addButtonClicked);
-		var elemSave= _makeButton('btnSave', 'cse-control', 'save', _saveButtonClicked);
-		var elemReload = _makeButton('btnReload', 'cse-control', 'reload', _reloadButtonClicked);
-		var elemDelete = _makeButton('btnDelete', 'cse-control', 'delete', _deleteButtonClicked);
+		var elemNew = _makeButton('btnNew', 'cse-control', '➕', 'new course', _addButtonClicked);
+		var elemSave= _makeButton('btnSave', 'cse-control', '💾', 'save course', _saveButtonClicked);
+		var elemReload = _makeButton('btnReload', 'cse-control', '🔄', 'reload course', _reloadButtonClicked);
+		var elemDelete = _makeButton('btnDelete', 'cse-control', '✖️', 'delete course', _deleteButtonClicked);
 		
 		page.courseselect = elemCourseSelect;
 		page.addbutton = elemNew;
@@ -739,8 +739,8 @@ const app = function () {
 		elemTable.appendChild(elemRow2);
 		elemTable.appendChild(elemRow3);
 
-		var elemPromptConfirm = _makeButton('btnPromptConfirm', 'cse-control-inverted', 'add new course', function() {_completeAddCourse(true);});
-		var elemPromptCancel = _makeButton('btnPromptCancel', 'cse-control-inverted', 'cancel', function() {_completeAddCourse(false);});
+		var elemPromptConfirm = _makeButton('btnPromptConfirm', 'cse-control-inverted', 'add new course', '', function() {_completeAddCourse(true);});
+		var elemPromptCancel = _makeButton('btnPromptCancel', 'cse-control-inverted', 'cancel', '', function() {_completeAddCourse(false);});
 		
 		var elemPromptError = document.createElement('span');
 		elemPromptError.classList.add('cse-standards-text');
@@ -757,11 +757,12 @@ const app = function () {
 		page.prompt.error = elemPromptError;
 	}
 	
-	function _makeButton(id, className, label, listener) {
+	function _makeButton(id, className, label, title, listener) {
 		var btn = document.createElement('button');
 		btn.id = id;
 		btn.classList.add(className);
 		btn.innerHTML = label;
+		btn.title = title;
 		btn.addEventListener('click', listener, false);
 		return btn;
 	}
@@ -769,9 +770,9 @@ const app = function () {
 	function _setDirtyBit(setTo) {
 		page.dirtyBit = setTo;
 		if (page.dirtyBit) {
-			page.savebutton.innerHTML = '*save';
+			page.header.toolname.innerHTML = '*' + PAGE_TITLE + ' (' + department.longname + ')';
 		} else {
-			page.savebutton.innerHTML = 'save';
+			page.header.toolname.innerHTML = PAGE_TITLE + ' (' + department.longname + ')';
 		}
 	}
 	
