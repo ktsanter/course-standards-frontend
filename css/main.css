@@ -119,9 +119,16 @@ body {
 	margin-left: 10px;
 }
 
-.cse-standards-tf-view {
+.cse-standards-viewlist {
+	margin-top: 4px;
+}
+
+.cse-standards-view {
+	font-style: italic;
+/*
 	margin-left: 4px;
 	font-size: 17px;
+	*/
 }
 
 .cse-standards-link {

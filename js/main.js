@@ -1,6 +1,6 @@
 //
 // TODO: look into splitting into mutliple files
-// TODO: generate link and/or embed code for BB from editor
+// TODO: edit the key prompts for uniformity
 //
 const app = function () {
 	const PAGE_TITLE = 'Course standards'
@@ -20,7 +20,10 @@ const app = function () {
 	
 	const NO_COURSE = 'NO_COURSE';
 	
+	const BASICINFO_KEY = 'BasicInfo';
 	const AP_KEY = 'AP';
+	const OTHER_KEY = 'OtherPolicies';
+	
 	const AP_POLICY_DOC = 'https://drive.google.com/open?id=1CnvIf-ZaTD5INn8ACzZi942oRpEE887EuJFipJ5eFNI';
 	
 	const SAVE_ME_CLASS = 'cse-save-me';
@@ -414,20 +417,44 @@ const app = function () {
 		
 		for (var i = 0; i < catList.length; i++) {
 			var catKey = catList[i];
+			
 			var catElement = _createCategoryElement(catData[catKey]);
 			var standardsKeyInfo = catData[catKey].keyList;
-			
-			for (var j = 0; j < standardsKeyInfo.length; j++) {
-				var standardsKey = standardsKeyInfo[j];
-				var standardValue = standardsData[standardsKey];
-				var standardSelections = selectionsData[standardsKey];
-				catElement.appendChild(_createStandardsElement(standardsKey, fullKeyList[standardsKey], standardValue, standardSelections));
+
+			if (params.editmode || catKey == BASICINFO_KEY) {
+				for (var j = 0; j < standardsKeyInfo.length; j++) {
+					var standardsKey = standardsKeyInfo[j];
+					var standardValue = standardsData[standardsKey];
+					var standardSelections = selectionsData[standardsKey];
+					catElement.appendChild(_createStandardsElement(standardsKey, fullKeyList[standardsKey], standardValue, standardSelections));
+				}
+
+			} else {
+				var standardsList = document.createElement('ul');
+				standardsList.classList.add('cse-standards-viewlist');
+				
+				for (var j = 0; j < standardsKeyInfo.length; j++) {
+					var standardsKey = standardsKeyInfo[j];
+					var standardValue = standardsData[standardsKey];
+					var standardSelections = selectionsData[standardsKey];
+					if (standardValue != ''  || fullKeyList[standardsKey].keyType == 'tf') {
+						var standardsOption = document.createElement('li');
+						standardsOption.appendChild(_createStandardsElement(standardsKey, fullKeyList[standardsKey], standardValue, standardSelections));
+						standardsList.appendChild(standardsOption);
+					}
+				}
+					
+				catElement.appendChild(standardsList);
 			}
 			
-				if (i > 0) {
-					page.standards.appendChild(document.createElement('br'));
-				}
-				page.standards.appendChild(catElement);
+			if (i > 0) {
+				page.standards.appendChild(document.createElement('br'));
+			}
+			page.standards.appendChild(catElement);
+			
+			if (catKey == BASICINFO_KEY && !params.editmode) {
+				page.standards.appendChild(_renderUsage());
+			}
 		}
 
 		var allSaveElements = document.getElementsByClassName(SAVE_ME_CLASS);
@@ -442,6 +469,21 @@ const app = function () {
 		while (page.standards.firstChild) {
 			page.standards.removeChild(page.standards.firstChild);
 		}
+	}
+	
+	function _renderUsage() {
+		var elemUsage = document.createElement('div');
+		var elemBR = document.createElement('br');
+		var elemSpan = document.createElement('span');
+		
+		elemSpan.innerHTML = '<strong>Note:</strong> this report is intended for the use of instructors only. ' 
+							+ 'Feel free to use the information elsewhere in your classroom, but please do not give students direct access to this item. '
+							+ 'These are the common policies for the course and every effort should be made to follow them. ' 
+							+ 'Please contact your lead instructor with questions, corrections, or information to be added to the report.';
+		elemUsage.appendChild(elemBR);
+		elemUsage.appendChild(elemSpan);
+		
+		return elemUsage;
 	}
 	
 	function _createCategoryElement(categoryInfo) {
@@ -512,7 +554,7 @@ const app = function () {
 			var elemValue = document.createElement('span');
 			elemValue.id = keyName;
 			elemValue.innerHTML = standardValue;
-			elemValue.classList.add('cse-standards-nonedit');
+			elemValue.classList.add('cse-standards-view');			
 		}
 		
 		elemStandard.appendChild(elemPrompt);
@@ -532,7 +574,11 @@ const app = function () {
 		var elemValue = document.createElement('span');
 		elemValue.id = keyName;
 		elemValue.innerHTML = standardValue;
-		elemValue.classList.add('cse-standards-nonedit');
+		if (params.editmode) {
+			elemValue.classList.add('cse-standards-nonedit');
+		} else {
+			elemValue.classList.add('cse-standards-view');			
+		}
 		
 		elemStandard.appendChild(elemPrompt);
 		elemStandard.appendChild(elemValue);
@@ -572,7 +618,7 @@ const app = function () {
 			var elemValue = document.createElement('span');
 			elemValue.id = keyName;
 			elemValue.innerHTML = standardValue;
-			elemValue.classList.add('cse-standards-nonedit');
+			elemValue.classList.add('cse-standards-view');			
 			
 			elemStandard.appendChild(elemValue);
 		}
@@ -599,8 +645,8 @@ const app = function () {
 		} else {
 			elemCheckbox = document.createElement('span');
 			elemCheckbox.id = keyName;
-			elemCheckbox.innerHTML = standardValue ? '🗹' : '☐';
-			elemCheckbox.classList.add('cse-standards-tf-view');			
+			elemCheckbox.innerHTML = standardValue ? ' yes' : ' no'; //'🗹' : '☐';
+			elemCheckbox.classList.add('cse-standards-view');			
 		}
 				
 		elemStandard.appendChild(elemPrompt);
@@ -613,7 +659,8 @@ const app = function () {
 			elemLink.href = apPolicyDoc.link;
 			elemLink.target = "_blank";
 			elemStandard.appendChild(elemLink);
-		}				
+		}			
+		
 		return elemStandard;
 	}
 
