@@ -1,7 +1,5 @@
 //
 // TODO: look into splitting into mutliple files
-// TODO: edit the key prompts for uniformity
-// TODO: navmode for view
 //
 const app = function () {
 	const PAGE_TITLE = 'Course standards'
