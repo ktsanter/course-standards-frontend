@@ -40,8 +40,11 @@ const app = function () {
 		page.notice = document.getElementById('notice');
 		page.notice.classList.add('cse-notice');
 		page.prompt = document.getElementById('prompt');
-		page.embed = document.getElementById('embed');
 		
+		page.embed = document.getElementById('embed');
+		page.embed.style.display = 'none';
+		//page.embed.style.visibility = 'hidden';
+
 		ssData.lastUpdateKey = 'Last_update';
 		ssData.longCourseNameKey = 'Official_course_name';
 		ssData.standardsData = {"courseName": null};
@@ -958,7 +961,7 @@ const app = function () {
 		var embedCode = '<iframe width="800" height="600" '
 		embedCode += 'src="' + LIVE_URL;
 		embedCode += '?department=' + params.department.shortname;
-		embedCode += '&course=' + params.course;
+		embedCode += '&course=' + ssData.standardsData.courseName;
 		embedCode += '">';
 		embedCode += '</iframe>';
 		/*
@@ -967,9 +970,11 @@ const app = function () {
 		
 		var embedElement = page.embed;
 		embedElement.value = embedCode;
+		page.embed.style.display = 'block';
 		embedElement.select();
 		document.execCommand("Copy");
 		embedElement.selectionEnd = embedElement.selectionStart;
+		page.embed.style.display = 'none';
 
 		_setNotice('embed code copied to clipboard');
 	}
