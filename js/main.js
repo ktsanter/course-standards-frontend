@@ -919,7 +919,6 @@ const app = function () {
 	}
 	
 	function _loadAfterDeleteCourse(data) {
-		console.log('loadAfterDeleteCourse: data=' + JSON.stringify(data));
 		_setNotice('');
 		
 		if (!data.success) {
