@@ -1,6 +1,6 @@
 ## Michigan Virtual course standards and policies tool
 
-| department | edit standards | view standards (read-only |
+| department | edit standards | view standards (read-only) |
 |------------|:----------------:|:---------------------------:|
 | CTE             |[edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&editmode)| [view](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&navmode) |
 | ELA/VPA         |[edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=elavpa&editmode)|[view](https://ktsanter.github.io/course-standards-frontend/index.html?department=elavpa&navmode) |
