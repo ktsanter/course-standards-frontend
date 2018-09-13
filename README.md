@@ -15,9 +15,9 @@
 1. **New course** - add a course for the department
 
    ![new course dialog](https://drive.google.com/uc?id=1Z_caxk97TwYAnm2lWRQcYoQlvtNma1GY)  
-   The short course name must be unique for your department and isn't displayed  
-   The official course name is what's displayed  
-   For example:  short = *ubw*, official = *Underwater Basket Weaving*
+   +The short course name must be unique for your department and isn't displayed  
+   +The official course name is what's displayed  
+   +Example: short = *ubw*, official = *Underwater Basket Weaving*
 2. **Save course** - save the data you've entered for a course
 3. **Reload course** - discard any changes and load the last saved data
 4. **Delete course** - remove course from the departement.  Note this is permanent and the data can't be recovered.
