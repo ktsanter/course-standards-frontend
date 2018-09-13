@@ -1,4 +1,4 @@
-## Michigan Virtual course standards and policies tool
+## Course standards and policies tool
 
 | department | edit standards | view standards (read-only) |
 |------------|:----------------:|:---------------------------:|
@@ -20,8 +20,8 @@
    * Example: short = *ubw*, official = *Underwater Basket Weaving*
 2. **Save course** - save the data you've entered for a course
 3. **Reload course** - discard any changes and load the last saved data
-4. **Delete course** - remove course from the departement.  Note this is permanent and the data can't be recovered.
-5. **Embed** - create the embed HTML code for the course and copy it  to the clipboard.  The course's page will be embedded in an iframe.
+4. **Delete course** - remove course from the department.  Note this is permanent and the data can't be recovered.
+5. **Embed** - create the embed HTML code for the course and copy it  to the clipboard.  The course's page will be embedded in an iframe. After you paste the code you can adjust the height and width of the iframe to suit your needs.
 ---
 
 ### Other notes
