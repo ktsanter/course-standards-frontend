@@ -2,17 +2,17 @@
 
 ### Links to edit standards for each department
 
-[Edit CTE standards](https://ktsanter.github.io/index.html?department=cte&editmode "edit CTE standards")
+[Edit CTE standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&editmode "edit CTE standards")
 
-[Edit ELA/VPA standards](https://ktsanter.github.io/index.html?department=elavpa&editmode "edit ELA/VPA standards")
+[Edit ELA/VPA standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=elavpa&editmode "edit ELA/VPA standards")
 
-[Edit Mathematics standards](https://ktsanter.github.io/index.html?department=math&editmode "edit Math standards")
+[Edit Mathematics standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=math&editmode "edit Math standards")
 
-[Edit Science standards](https://ktsanter.github.io/index.html?department=science&editmode "edit Science standards")
+[Edit Science standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=science&editmode "edit Science standards")
 
-[Edit Social Studies standards](https://ktsanter.github.io/index.html?department=ss&editmode "edit Social Studies standards")
+[Edit Social Studies standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=ss&editmode "edit Social Studies standards")
 
-[Edit World Languages standards](https://ktsanter.github.io/index.html?department=wl&editmode "edit World Languages standards")
+[Edit World Languages standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=wl&editmode "edit World Languages standards")
 
 
 ### Links to review standards (read-only) for each department
