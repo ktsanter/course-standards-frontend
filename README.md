@@ -13,7 +13,8 @@
 ### Guide to controls when editing courses
 ![edit controls](https://drive.google.com/uc?id=169RBHhdbsM9DH8v152fkGAdFO9qzyXXm)
 1. New course
-![new course dialog](https://drive.google.com/uc?id=1Z_caxk97TwYAnm2lWRQcYoQlvtNma1GY)
+
+   ![new course dialog](https://drive.google.com/uc?id=1Z_caxk97TwYAnm2lWRQcYoQlvtNma1GY)
 2. Save course
 3. Reload course
 4. Delete course
