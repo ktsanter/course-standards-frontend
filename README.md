@@ -29,6 +29,6 @@
 * Fields left blank (except for yes/no fields) won't be displayed on the view-only version for a course
 * You can find the URL for the view-only version of a single course insde the embed code.  It is structured like this  
 https://ktsanter.github.io/course-standards-frontend?department=xxx&course=yyy  
-where xxx is one of cte, elavpa, math, science, ss, or wl  
-and yyy is the short name for the course, e.g.  
+where *xxx* is one of *cte*, *elavpa*, *math*, *science*, *ss*, or *wl*  
+and *yyy* is the short name for the course, e.g.  
 https://ktsanter.github.io/course-standards-frontend?department=cte&course=fpa
