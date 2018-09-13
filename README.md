@@ -1,6 +1,5 @@
 ## Michigan Virtual course standards and policies tool
 
-### Links to standards for each department
 | department | edit standards | view standards (read-only |
 |------------|:----------------:|:---------------------------:|
 | CTE             |[edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&editmode)| [view](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&navmode) |
@@ -14,7 +13,7 @@
 ### Guide to controls when editing courses
 ![edit controls](https://drive.google.com/uc?id=1qdK-Y4ugaeC-rYcbTmnDsEfNHqikiB7K)
 1. New course
-xxxx
+![new course dialog](https://drive.google.com/open?id=1Z_caxk97TwYAnm2lWRQcYoQlvtNma1GY)
 2. Save course
 3. Reload course
 4. Delete course
