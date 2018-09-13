@@ -2,7 +2,7 @@
 
 ### Links to edit standards for each department
 | department | edit standards | view standards (read-only |
-|------------|----------------|---------------------------|
+|------------|:----------------:|---------------------------|
 | CTE             | [edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&editmode)| xxx |
 | ELA/VPA         | [edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=elavpa&editmode)| xxx |
 | Math            | [edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=math&editmode)| xxx |
