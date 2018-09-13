@@ -24,3 +24,6 @@
 5. **Embed** - create the embed HTML code for the course and copy it  to the clipboard.  The course's page will be embedded in an iframe.
 ---
 
+### Other notes
+* Many of the fields have drop down lists.  These will be populated with all of the answers entered for course in the department.  This is handy for using the same wording in multiple courses
+* Fields left blank (except for yes/no fields) won't be displayed on the view-only version for a course
