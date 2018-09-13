@@ -16,8 +16,8 @@
 
    ![new course dialog](https://drive.google.com/uc?id=1Z_caxk97TwYAnm2lWRQcYoQlvtNma1GY)  
    The short course name must be unique for your department and isn't displayed  
-   The long course name is the "official" name and is displayed  
-   For example:  short = ubw, long = Underwater Basket Weaving
+   The official course name is what's displayed  
+   For example:  short = *ubw*, official = *Underwater Basket Weaving*
 2. Save course
 3. Reload course
 4. Delete course
