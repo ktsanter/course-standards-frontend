@@ -25,7 +25,7 @@
 ---
 
 ### Other notes
-* Many of the fields have drop down lists.  These will be populated with all of the answers entered for course in the department.  This is handy for using the same wording in multiple courses
+* Many of the fields have drop down lists.  These will be populated with all of the answers entered for courses in the department.  This is handy for using the same wording in multiple courses
 * Fields left blank (except for yes/no fields) won't be displayed on the view-only version for a course
 * You can find the URL for the view-only version of a single course insde the embed code.  It is structured like this  
 https://ktsanter.github.io/course-standards-frontend?department=xxx&course=yyy  
