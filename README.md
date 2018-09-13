@@ -1,12 +1,10 @@
 ## Michigan Virtual course standards and policies tool
 
 ### Links to edit standards for each department
+| department | edit standards | view standards (read-only |
+|------------|----------------|---------------------------|
+| CTE | [Edit Mathematics standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=math&editmode "edit Math standards")| xxx |
 
-[Edit CTE standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&editmode "edit CTE standards")
-
-[Edit ELA/VPA standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=elavpa&editmode "edit ELA/VPA standards")
-
-[Edit Mathematics standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=math&editmode "edit Math standards")
 
 [Edit Science standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=science&editmode "edit Science standards")
 
