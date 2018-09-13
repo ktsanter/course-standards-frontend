@@ -2,13 +2,25 @@
 
 ### Links to edit standards for each department
 | department | edit standards | view standards (read-only |
-|------------|:----------------:|---------------------------|
-| CTE             | [edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&editmode)| xxx |
-| ELA/VPA         | [edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=elavpa&editmode)| xxx |
-| Math            | [edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=math&editmode)| xxx |
-| Science         | [edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=science&editmode)| xxx |
-| Social Studies  | [edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=ss&editmode)| xxx |
-| World Languages | [edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=wl&editmode)| xxx |
+|------------|:----------------:|:---------------------------:|
+| CTE             |
+[edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&editmode)| 
+[view](https://ktsanter.github.io/course-standards-frontend/index.html?department=cte&navmode) |
+| ELA/VPA         | 
+[edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=elavpa&editmode)|
+xxx |
+| Math            |
+[edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=math&editmode)|
+xxx |
+| Science         |
+[edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=science&editmode)|
+xxx |
+| Social Studies  |
+[edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=ss&editmode)|
+xxx |
+| World Languages |
+[edit](https://ktsanter.github.io/course-standards-frontend/index.html?department=wl&editmode)|
+xxx |
 
 
 [Edit Science standards](https://ktsanter.github.io/course-standards-frontend/index.html?department=science&editmode "edit Science standards")
