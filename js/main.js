@@ -531,7 +531,7 @@ const app = function () {
 	}
 	
 	function _createStandardsElement_text(keyName, keyInfo, standardValue) {
-		var elemStandard = document.createElement('div');
+		var elemStandard = document.createElement('span');
 		elemStandard.classList.add('cse-standards');
 		
 		var elemPrompt = document.createElement('span');
@@ -561,7 +561,7 @@ const app = function () {
 	}
 	
 	function _createStandardsElement_nonedit(keyName, keyInfo, standardValue) {
-		var elemStandard = document.createElement('div');
+		var elemStandard = document.createElement('span');
 		elemStandard.classList.add('cse-standards');
 		
 		var elemPrompt = document.createElement('span');
@@ -584,7 +584,7 @@ const app = function () {
 	}
 				
 	function _createStandardsElement_datalist(keyName, keyInfo, standardValue, selections) {
-		var elemStandard = document.createElement('div');
+		var elemStandard = document.createElement('span');
 		elemStandard.classList.add('cse-standards');
 		
 		var elemPrompt = document.createElement('span');
@@ -625,7 +625,7 @@ const app = function () {
 	}
 
 	function _createStandardsElement_tf(keyName, keyInfo, standardValue) {
-		var elemStandard = document.createElement('div');
+		var elemStandard = document.createElement('span');
 		elemStandard.classList.add('cse-standards');
 
 		var elemPrompt = document.createElement('span');
@@ -669,7 +669,7 @@ const app = function () {
 		var linkInfo = JSON.parse(standardValue);
 		//console.log(keyInfo.keyName + ': ' + JSON.stringify(linkInfo) + ', ' + linkInfo.text);
 		if (linkInfo.text) {
-			var elemStandard = document.createElement('div');
+			var elemStandard = document.createElement('span');
 			
 			var elemLink = document.createElement('a');
 			elemLink.classList.add('cse-standards-link');
