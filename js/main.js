@@ -500,7 +500,12 @@ const app = function () {
 	}
 	
 	function _createStandardsElement(keyName, keyInfo, standardValue, selections) {
-		var elemWrapper = document.createElement('span');
+		var elemWrapper;
+		if (params.editmode) {
+			elemWrapper = document.createElement('div');
+		} else {
+			elemWrapper = document.createElement('span');
+		}
 		
 		if (keyInfo.keyDisplay) {
 			var elemStandard;
