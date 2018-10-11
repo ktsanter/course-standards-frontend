@@ -23,7 +23,8 @@ const app = function () {
 	const AP_KEY = 'AP';
 	const OTHER_KEY = 'OtherPolicies';
 	
-	const AP_POLICY_DOC = 'https://drive.google.com/open?id=1CnvIf-ZaTD5INn8ACzZi942oRpEE887EuJFipJ5eFNI';
+	//const AP_POLICY_DOC = 'https://drive.google.com/open?id=1CnvIf-ZaTD5INn8ACzZi942oRpEE887EuJFipJ5eFNI';
+	const AP_POLICY_DOC = 'https://michiganvirtual.org/about/support/knowledge-base/advanced-placement-course-policy/';
 	
 	const SAVE_ME_CLASS = 'cse-save-me';
 	
